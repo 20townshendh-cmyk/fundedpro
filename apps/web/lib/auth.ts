@@ -109,7 +109,7 @@ function isAtLeast16(dateOfBirth: string | undefined) {
     age -= 1;
   }
 
-  return age >= 16;
+  return age >= 18;
 }
 
 function db() {
@@ -224,7 +224,7 @@ export async function signupAction(formData: FormData) {
   }
 
   if (!isAtLeast16(dateOfBirth)) {
-    buildSignupFieldRedirect("under-16", "dateOfBirth", formData);
+    buildSignupFieldRedirect("under-18", "dateOfBirth", formData);
   }
 
   if (!isValidPhoneNumber({ phoneCountry, phoneNumber })) {

@@ -63,7 +63,7 @@ const signupErrorMessages: Record<string, string> = {
   "missing-field": "Please fill out the required field.",
   "invalid-field": "Please correct the field.",
   "password-mismatch": "Passwords do not match.",
-  "under-16": "You must be at least 16 years old to create an account.",
+  "under-18": "You must be at least 18 years old to create an account.",
   "invalid-phone": "Please enter a valid phone number.",
   "email-exists": "An account with that email already exists.",
   "verification-expired": "Your verification email expired after 10 minutes. You can sign up again now.",
@@ -119,8 +119,8 @@ function getSignupErrorMessage(error: string | undefined, field: string | undefi
     return "Enter a valid phone number.";
   }
 
-  if (error === "under-16") {
-    return "You must be at least 16 years old to create an account.";
+  if (error === "under-18") {
+    return "You must be at least 18 years old to create an account.";
   }
 
   return signupErrorMessages[error] ?? "Please check your form and try again.";
