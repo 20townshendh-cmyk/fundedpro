@@ -1,0 +1,458 @@
+generator client {
+  provider = "prisma-client-js"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  TRADER
+  ADMIN
+}
+
+enum ChallengeType {
+  ONE_STEP
+  TWO_STEP
+  INSTANT
+}
+
+enum AccountState {
+  PENDING
+  EVALUATION
+  FUNDED
+  PASSED
+  FAILED
+  BREACHED
+  REVIEW
+  RESET
+}
+
+enum PayoutStatus {
+  PENDING
+  REVIEW
+  APPROVED
+  REJECTED
+  PAID
+}
+
+enum InvoiceStatus {
+  PAID
+  OPEN
+  REFUNDED
+}
+
+enum DemoAccountStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum AssetClass {
+  FUTURES
+  CRYPTO
+}
+
+enum DemoOrderSide {
+  BUY
+  SELL
+}
+
+enum DemoOrderType {
+  MARKET
+  LIMIT
+}
+
+enum DemoOrderStatus {
+  WORKING
+  FILLED
+  CANCELED
+  REJECTED
+}
+
+enum PositionSide {
+  LONG
+  SHORT
+}
+
+model User {
+  id              String             @id @default(cuid())
+  email           String             @unique
+  googleSubject   String?            @unique
+  fullName        String
+  passwordHash    String
+  emailVerifiedAt DateTime?
+  emailVerificationToken String?     @unique
+  emailVerificationSentAt DateTime?
+  passwordResetToken String?         @unique
+  passwordResetSentAt DateTime?
+  activeDemoAccountId String?
+  role            Role               @default(TRADER)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  challengeOrders ChallengeOrder[]
+  tradingAccounts TradingAccount[]
+  invoices        Invoice[]
+  payoutRequests  PayoutRequest[]
+  auditLogs       AuditLog[]
+  demoAccounts    DemoAccount[]      @relation("UserDemoAccounts")
+  activeDemoAccount DemoAccount?     @relation("ActiveDemoAccount", fields: [activeDemoAccountId], references: [id])
+  watchlists      Watchlist[]
+  demoOrders      DemoOrder[]
+  demoFills       DemoFill[]
+  demoPositions   DemoPosition[]
+  accountActivityLogs AccountActivityLog[]
+}
+
+model ChallengePlan {
+  id               String            @id @default(cuid())
+  slug             String            @unique
+  name             String
+  challengeType    ChallengeType
+  accountSize      Int
+  priceCents       Int
+  phaseCount       Int
+  profitTargetPct  Decimal           @db.Decimal(5, 2)
+  dailyDrawdownPct Decimal           @db.Decimal(5, 2)
+  maxDrawdownPct   Decimal           @db.Decimal(5, 2)
+  minTradingDays   Int
+  payoutSplitPct   Decimal           @db.Decimal(5, 2)
+  resetEnabled     Boolean           @default(false)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  challengeOrders  ChallengeOrder[]
+}
+
+model ChallengeOrder {
+  id              String        @id @default(cuid())
+  userId          String
+  challengePlanId String
+  stripeSessionId String?       @unique
+  status          String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  user            User          @relation(fields: [userId], references: [id])
+  challengePlan   ChallengePlan @relation(fields: [challengePlanId], references: [id])
+  invoice         Invoice?
+}
+
+model TradingAccount {
+  id              String       @id @default(cuid())
+  userId          String
+  challengeOrderId String?     @unique
+  login           String       @unique
+  platform        String       @default("MetaTrader 5")
+  connection      String       @default("FundedPro-Demo")
+  tradingPassword String?
+  credentialsIssuedAt DateTime?
+  provider        String
+  accountState    AccountState @default(PENDING)
+  currentPhase    Int          @default(1)
+  startingBalance Decimal      @db.Decimal(12, 2)
+  phaseStartBalance Decimal    @db.Decimal(12, 2)
+  currentBalance  Decimal      @db.Decimal(12, 2)
+  currentEquity   Decimal      @db.Decimal(12, 2)
+  dailyLossLimit  Decimal      @db.Decimal(12, 2)
+  totalLossLimit  Decimal      @db.Decimal(12, 2)
+  profitTarget    Decimal      @db.Decimal(12, 2)
+  tradingDays     Int          @default(0)
+  phaseStartedAt  DateTime     @default(now())
+  reviewQueuedAt  DateTime?
+  passedAt        DateTime?
+  fundedAt        DateTime?
+  breachedAt      DateTime?
+  lastEvaluatedAt DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  user            User         @relation(fields: [userId], references: [id])
+  demoAccount     DemoAccount?
+  payoutRequests  PayoutRequest[]
+  mt5SyncRuns     Mt5SyncRun[]
+  mt5Positions    Mt5PositionSnapshot[]
+  mt5ClosedTrades Mt5ClosedTrade[]
+}
+
+model Invoice {
+  id               String         @id @default(cuid())
+  userId           String
+  challengeOrderId String         @unique
+  reference        String         @unique
+  amountCents      Int
+  status           InvoiceStatus
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  user             User           @relation(fields: [userId], references: [id])
+  challengeOrder   ChallengeOrder @relation(fields: [challengeOrderId], references: [id])
+}
+
+model PayoutRequest {
+  id               String       @id @default(cuid())
+  userId           String
+  tradingAccountId String
+  amountCents      Int
+  status           PayoutStatus @default(PENDING)
+  note             String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  user             User         @relation(fields: [userId], references: [id])
+  tradingAccount   TradingAccount @relation(fields: [tradingAccountId], references: [id])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorUserId String
+  targetType  String
+  targetId    String
+  action      String
+  summary     String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  actor       User     @relation(fields: [actorUserId], references: [id])
+
+  @@index([actorUserId, createdAt])
+  @@index([targetType, targetId, createdAt])
+}
+
+model Mt5SyncRun {
+  id               String               @id @default(cuid())
+  tradingAccountId String
+  login            String
+  provider         String
+  status           String
+  errorMessage     String?
+  balance          Decimal              @db.Decimal(12, 2)
+  equity           Decimal              @db.Decimal(12, 2)
+  realizedPnl      Decimal              @db.Decimal(12, 2)
+  unrealizedPnl    Decimal              @db.Decimal(12, 2)
+  dailyLossUsed    Decimal              @db.Decimal(12, 2)
+  totalLossUsed    Decimal              @db.Decimal(12, 2)
+  tradingDays      Int
+  rawPayload       Json?
+  syncedAt         DateTime
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  tradingAccount   TradingAccount       @relation(fields: [tradingAccountId], references: [id])
+  positions        Mt5PositionSnapshot[]
+  closedTrades     Mt5ClosedTrade[]
+
+  @@index([tradingAccountId, syncedAt])
+}
+
+model Mt5PositionSnapshot {
+  id               String         @id @default(cuid())
+  tradingAccountId String
+  syncRunId        String
+  ticket           String
+  symbol           String
+  side             String
+  lots             Decimal        @db.Decimal(10, 2)
+  openPrice        Decimal        @db.Decimal(18, 6)
+  markPrice        Decimal        @db.Decimal(18, 6)
+  unrealizedPnl    Decimal        @db.Decimal(12, 2)
+  createdAt        DateTime       @default(now())
+  tradingAccount   TradingAccount @relation(fields: [tradingAccountId], references: [id])
+  syncRun          Mt5SyncRun     @relation(fields: [syncRunId], references: [id])
+
+  @@index([tradingAccountId, createdAt])
+  @@unique([syncRunId, ticket])
+}
+
+model Mt5ClosedTrade {
+  id               String         @id @default(cuid())
+  tradingAccountId String
+  syncRunId        String
+  ticket           String
+  symbol           String
+  side             String
+  lots             Decimal        @db.Decimal(10, 2)
+  openPrice        Decimal        @db.Decimal(18, 6)
+  closePrice       Decimal        @db.Decimal(18, 6)
+  realizedPnl      Decimal        @db.Decimal(12, 2)
+  openedAt         DateTime
+  closedAt         DateTime
+  createdAt        DateTime       @default(now())
+  tradingAccount   TradingAccount @relation(fields: [tradingAccountId], references: [id])
+  syncRun          Mt5SyncRun     @relation(fields: [syncRunId], references: [id])
+
+  @@index([tradingAccountId, closedAt])
+  @@unique([tradingAccountId, ticket])
+}
+
+model DemoAccount {
+  id              String            @id @default(cuid())
+  userId          String
+  tradingAccountId String?          @unique
+  accountName     String
+  startingBalance Decimal           @db.Decimal(12, 2)
+  currentBalance  Decimal           @db.Decimal(12, 2)
+  buyingPower     Decimal           @db.Decimal(12, 2)
+  equity          Decimal           @db.Decimal(12, 2)
+  realizedPnl     Decimal           @db.Decimal(12, 2) @default(0)
+  unrealizedPnl   Decimal           @db.Decimal(12, 2) @default(0)
+  totalTrades     Int               @default(0)
+  status          DemoAccountStatus @default(ACTIVE)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  user            User              @relation("UserDemoAccounts", fields: [userId], references: [id])
+  tradingAccount  TradingAccount?   @relation(fields: [tradingAccountId], references: [id])
+  activeUsers     User[]            @relation("ActiveDemoAccount")
+  orders          DemoOrder[]
+  fills           DemoFill[]
+  positions       DemoPosition[]
+  watchlists      Watchlist[]
+  activityLogs    AccountActivityLog[]
+
+  @@index([userId, updatedAt])
+}
+
+model Instrument {
+  id           String          @id @default(cuid())
+  symbol       String          @unique
+  name         String
+  assetClass   AssetClass
+  tickSize     Decimal         @db.Decimal(18, 6)
+  tickValue    Decimal         @db.Decimal(12, 2)
+  defaultPrice Decimal         @db.Decimal(18, 6)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  priceTicks   PriceTick[]
+  orders       DemoOrder[]
+  fills        DemoFill[]
+  positions    DemoPosition[]
+  watchlistItems WatchlistItem[]
+}
+
+model PriceTick {
+  id           String      @id @default(cuid())
+  instrumentId String
+  price        Decimal     @db.Decimal(18, 6)
+  changeAmount Decimal     @db.Decimal(18, 6) @default(0)
+  changePct    Decimal     @db.Decimal(8, 4) @default(0)
+  source       String      @default("simulated")
+  createdAt    DateTime    @default(now())
+  instrument   Instrument  @relation(fields: [instrumentId], references: [id])
+
+  @@index([instrumentId, createdAt])
+}
+
+model DemoOrder {
+  id              String          @id @default(cuid())
+  userId          String
+  demoAccountId   String
+  instrumentId    String
+  side            DemoOrderSide
+  type            DemoOrderType
+  status          DemoOrderStatus @default(WORKING)
+  quantity        Int
+  limitPrice      Decimal?        @db.Decimal(18, 6)
+  submittedPrice  Decimal?        @db.Decimal(18, 6)
+  averageFillPrice Decimal?       @db.Decimal(18, 6)
+  filledQuantity  Int             @default(0)
+  remainingQuantity Int           @default(0)
+  rejectionReason String?
+  submittedAt     DateTime        @default(now())
+  filledAt        DateTime?
+  canceledAt      DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  user            User            @relation(fields: [userId], references: [id])
+  demoAccount     DemoAccount     @relation(fields: [demoAccountId], references: [id])
+  instrument      Instrument      @relation(fields: [instrumentId], references: [id])
+  fills           DemoFill[]
+  activityLogs    AccountActivityLog[]
+
+  @@index([demoAccountId, status, createdAt])
+  @@index([instrumentId, status, createdAt])
+}
+
+model DemoFill {
+  id            String       @id @default(cuid())
+  userId        String
+  demoAccountId String
+  orderId       String
+  instrumentId  String
+  side          DemoOrderSide
+  quantity      Int
+  price         Decimal      @db.Decimal(18, 6)
+  realizedPnl   Decimal      @db.Decimal(12, 2) @default(0)
+  filledAt      DateTime     @default(now())
+  createdAt     DateTime     @default(now())
+  user          User         @relation(fields: [userId], references: [id])
+  demoAccount   DemoAccount  @relation(fields: [demoAccountId], references: [id])
+  order         DemoOrder    @relation(fields: [orderId], references: [id])
+  instrument    Instrument   @relation(fields: [instrumentId], references: [id])
+  activityLogs  AccountActivityLog[]
+
+  @@index([demoAccountId, filledAt])
+  @@index([orderId, filledAt])
+}
+
+model DemoPosition {
+  id                String       @id @default(cuid())
+  userId            String
+  demoAccountId     String
+  instrumentId      String
+  side              PositionSide
+  quantity          Int
+  averageEntryPrice Decimal      @db.Decimal(18, 6)
+  lastPrice         Decimal      @db.Decimal(18, 6)
+  realizedPnl       Decimal      @db.Decimal(12, 2) @default(0)
+  unrealizedPnl     Decimal      @db.Decimal(12, 2) @default(0)
+  openedAt          DateTime     @default(now())
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  user              User         @relation(fields: [userId], references: [id])
+  demoAccount       DemoAccount  @relation(fields: [demoAccountId], references: [id])
+  instrument        Instrument   @relation(fields: [instrumentId], references: [id])
+
+  @@unique([demoAccountId, instrumentId])
+  @@index([userId, updatedAt])
+}
+
+model Watchlist {
+  id            String          @id @default(cuid())
+  userId        String
+  demoAccountId String?
+  name          String
+  isDefault     Boolean         @default(false)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  user          User            @relation(fields: [userId], references: [id])
+  demoAccount   DemoAccount?    @relation(fields: [demoAccountId], references: [id])
+  items         WatchlistItem[]
+
+  @@index([userId, updatedAt])
+}
+
+model WatchlistItem {
+  id           String      @id @default(cuid())
+  watchlistId  String
+  instrumentId String
+  sortOrder    Int         @default(0)
+  createdAt    DateTime    @default(now())
+  watchlist    Watchlist   @relation(fields: [watchlistId], references: [id])
+  instrument   Instrument  @relation(fields: [instrumentId], references: [id])
+
+  @@unique([watchlistId, instrumentId])
+  @@index([watchlistId, sortOrder])
+}
+
+model AccountActivityLog {
+  id            String      @id @default(cuid())
+  userId        String
+  demoAccountId String
+  orderId       String?
+  fillId        String?
+  type          String
+  summary       String
+  metadata      Json?
+  createdAt     DateTime    @default(now())
+  user          User        @relation(fields: [userId], references: [id])
+  demoAccount   DemoAccount @relation(fields: [demoAccountId], references: [id])
+  order         DemoOrder?  @relation(fields: [orderId], references: [id])
+  fill          DemoFill?   @relation(fields: [fillId], references: [id])
+
+  @@index([demoAccountId, createdAt])
+  @@index([userId, createdAt])
+}

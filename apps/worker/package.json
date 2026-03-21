@@ -1,0 +1,15 @@
+{
+  "name": "@fundedpro/worker",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "lint": "echo worker lint pending",
+    "typecheck": "tsc --noEmit",
+    "test": "echo worker test pending"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.6",
+    "typescript": "^5.8.3"
+  }
+}

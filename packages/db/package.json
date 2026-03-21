@@ -1,0 +1,23 @@
+{
+  "name": "@fundedpro/db",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "dependencies": {
+    "@prisma/client": "^6.7.0",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.15.5",
+    "dotenv-cli": "^8.0.0",
+    "prisma": "^6.7.0",
+    "tsx": "^4.20.6"
+  },
+  "scripts": {
+    "db:generate": "dotenv -o -e ../../.env -- prisma generate",
+    "db:migrate": "dotenv -o -e ../../.env -- prisma migrate dev",
+    "db:seed": "dotenv -o -e ../../.env -- prisma db seed",
+    "db:deploy": "dotenv -o -e ../../.env -- prisma migrate deploy"
+  }
+}
