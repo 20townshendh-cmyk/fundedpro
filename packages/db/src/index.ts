@@ -2,6 +2,7 @@ import fs from "node:fs";
 import { Pool } from "pg";
 import path from "node:path";
 export * from "@prisma/client";
+export type Role = "TRADER" | "ADMIN";
 
 declare global {
   // eslint-disable-next-line no-var
