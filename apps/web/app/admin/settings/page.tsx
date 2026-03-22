@@ -23,7 +23,7 @@ export default async function AdminSettingsPage() {
   const serviceStatus = [
     { label: "Auth", value: env.nextAuthSecret !== "change-me" ? "Configured" : "Needs review", note: "Session signing and RBAC protection." },
     { label: "Stripe", value: env.hasRealStripe ? "Live-ready" : "Not configured for live processing", note: "Checkout, invoice, and webhook readiness." },
-    { label: "Email", value: env.resendApiKey ? "Connected" : "Missing API key", note: `Outbound mail from ${env.resendFromEmail}.` },
+    { label: "Email", value: env.hasRealResend ? "Live-ready" : env.resendApiKey ? "Needs verified sender" : "Missing API key", note: `Outbound mail from ${env.resendFromEmail}.` },
     { label: "Google OAuth", value: env.googleClientId && env.googleClientSecret ? "Configured" : "Not configured", note: "Optional social login." },
     { label: "Trade credentials", value: env.tradingCredentialSecret ? "Protected" : "Missing secret", note: "Encryption for trading passwords and cookies." },
     { label: "Runtime", value: env.nodeEnv, note: `Base URL ${env.appUrl}.` }
@@ -54,7 +54,7 @@ export default async function AdminSettingsPage() {
                 </article>
                 <article className="inline-metric">
                   <span>Email</span>
-                  <strong>{env.resendApiKey ? "Connected" : "Missing key"}</strong>
+                  <strong>{env.hasRealResend ? "Live-ready" : env.resendApiKey ? "Review sender" : "Missing key"}</strong>
                 </article>
                 <article className="inline-metric">
                   <span>Platform</span>
