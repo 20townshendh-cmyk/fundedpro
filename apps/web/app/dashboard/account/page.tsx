@@ -102,6 +102,11 @@ function renderShowcaseAccountDetail(session: Awaited<ReturnType<typeof getSessi
       <TopNav />
       <main className="dashboard-shell">
         <aside className="dashboard-sidebar">
+          <div className="sidebar-brand">
+            <p className="eyebrow">Trader workspace</p>
+            <h2 className="sidebar-title">FundedPro</h2>
+            <p className="surface-copy">Account detail stays in showcase mode until your first live challenge provisions a dedicated trading login.</p>
+          </div>
           <nav className="sidebar-nav">
             <a className="sidebar-link sidebar-link-gold" href="/checkout">New Challenge</a>
             <a className="sidebar-link" href="/dashboard/trades">Trade Now</a>
@@ -376,7 +381,7 @@ export default async function AccountDetailPage({ searchParams }: AccountPagePro
     redirect("/login");
   }
 
-  if (!accountResult.rows.length && !plan) {
+  if (!accountResult.rows.length) {
     return renderShowcaseAccountDetail(session, getDisplayName(user.fullName, session.email));
   }
 

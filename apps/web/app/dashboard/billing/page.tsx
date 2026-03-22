@@ -214,7 +214,7 @@ export default async function BillingPage() {
   ]);
   const summary = accountSummary.rows[0] ?? { totalAccounts: "0", latestLogin: null };
 
-  if (!invoices.rows.length && !orderHistory.rows.length && !Number(summary.totalAccounts)) {
+  if (!invoices.rows.length && !orderHistory.rows.length) {
     return renderShowcaseBilling(session);
   }
 

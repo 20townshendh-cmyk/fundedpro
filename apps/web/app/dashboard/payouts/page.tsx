@@ -143,7 +143,7 @@ export default async function PayoutsPage() {
     )
   ]);
 
-  if (!accountResult.rows.length && !payouts.rows.length) {
+  if (!accountResult.rows.length) {
     return renderShowcasePayouts(session);
   }
 
