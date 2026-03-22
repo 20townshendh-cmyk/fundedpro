@@ -49,6 +49,7 @@ const messages = {
     "invalid-order": "Enter a valid order before submitting.",
     "account-breached": "This account is breached. Trade entry is locked.",
     "market-closed": "Market is closed for this instrument right now.",
+    "price-stale": "Execution price is stale. Wait for a fresh tick before sending a market order.",
     "order-rejected": "Order was rejected. Check buying power and inputs.",
     "terminal-login": "Username or password is incorrect."
   }
@@ -70,15 +71,35 @@ function formatWhole(value: number) {
   return Math.max(0, Math.floor(value)).toLocaleString("en-US");
 }
 
-function buildDepthRows(price: number, tickSize: number) {
+function isUsSessionOpen(now = new Date()) {
+  const hour = now.getUTCHours();
+  return hour >= 13 && hour < 21;
+}
+
+function getDisplaySpreadTicks(symbol: string, feedStatus: "live" | "simulated" | "stale", now = new Date()) {
+  let ticks = symbol === "NQ" ? 2 : 1;
+
+  if (!isUsSessionOpen(now)) {
+    ticks += 1;
+  }
+
+  if (feedStatus !== "live") {
+    ticks += 1;
+  }
+
+  return ticks;
+}
+
+function buildDepthRows(price: number, tickSize: number, symbol: string, feedStatus: "live" | "simulated" | "stale") {
+  const spreadTicks = getDisplaySpreadTicks(symbol, feedStatus);
   return Array.from({ length: 18 }, (_, index) => {
     const offset = 8 - index;
     const rowPrice = price + offset * tickSize;
-    const size = Math.max(1, Math.round((Math.abs(offset) + 1) * 1.2));
+    const size = Math.max(1, Math.round((Math.abs(offset) + 1) * 1.2 + (spreadTicks - 1)));
     return {
       price: rowPrice,
-      bid: offset < 0 ? size : 0,
-      ask: offset > 0 ? size : 0,
+      bid: offset <= -spreadTicks ? size : 0,
+      ask: offset >= spreadTicks ? size : 0,
       last: offset === 0
     };
   });
@@ -160,7 +181,7 @@ export default async function TradeNowPage({ searchParams }: TradeNowPageProps) 
   const selectedPrice = Number(terminal.executionInstrument?.price ?? terminal.selectedInstrument?.price ?? 0);
   const tickSize = Number(terminal.executionInstrument?.tickSize ?? terminal.selectedInstrument?.tickSize ?? (symbol === "NQ" || symbol === "ES" ? 0.25 : 1));
   const tickValue = Number(terminal.executionInstrument?.tickValue ?? terminal.selectedInstrument?.tickValue ?? 1);
-  const depthRows = buildDepthRows(selectedPrice || 0, tickSize || 1);
+  const depthRows = buildDepthRows(selectedPrice || 0, tickSize || 1, symbol, terminal.feedStatus);
   const maxContracts = getMaxContractsForBalance(Number(terminal.activeAccount?.startingBalance ?? 0));
   const secondaryLastPrice = Number(terminal.watchlistItems.find((item) => item.symbol === secondarySymbol)?.price ?? 0);
   const chartBaseQuery = `&${accountQuery}tab=${encodeURIComponent(terminal.selectedTab)}&layout=${encodeURIComponent(layout)}`;
@@ -169,6 +190,11 @@ export default async function TradeNowPage({ searchParams }: TradeNowPageProps) 
   const switchableAccounts = terminal.accounts.filter(
     (account) => account.tradingAccountId && account.accountState !== "BREACHED"
   );
+  const displaySpreadTicks = getDisplaySpreadTicks(symbol, terminal.feedStatus);
+  const displaySpreadAmount = tickSize * displaySpreadTicks;
+  const feedUpdatedLabel = terminal.lastTickAt
+    ? new Date(terminal.lastTickAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+    : "No feed";
 
   return (
     <SiteShell>
@@ -246,6 +272,12 @@ export default async function TradeNowPage({ searchParams }: TradeNowPageProps) 
                   <span>Rule limits were exceeded. Trade entry is locked for this account.</span>
                 </div>
               ) : null}
+              {terminal.feedStatus === "stale" ? (
+                <div className="trade-breach-banner trade-feed-banner warning">
+                  <strong>Market data stale</strong>
+                  <span>Fresh execution ticks are not available right now. New market orders can be rejected until the feed updates.</span>
+                </div>
+              ) : null}
               <article className="trade-instrument-strip">
                 <div className="trade-strip-symbol">
                   <strong>{symbol}</strong>
@@ -276,8 +308,11 @@ export default async function TradeNowPage({ searchParams }: TradeNowPageProps) 
                 <div className="trade-strip-metrics">
                   <div><span>Exec</span><strong>{formatPrice(terminal.executionInstrument?.price ?? terminal.selectedInstrument?.price)}</strong></div>
                   <div><span>Chart</span><strong>{formatPrice(terminal.selectedInstrument?.price)}</strong></div>
+                  <div><span>Spread</span><strong>{formatPrice(displaySpreadAmount)}</strong></div>
                   <div><span>Capacity</span><strong>{formatWhole(maxContracts)}</strong></div>
                   <div><span>Change</span><strong className={Number(terminal.selectedInstrument?.changeAmount ?? 0) >= 0 ? "positive" : "negative"}>{formatSigned(terminal.selectedInstrument?.changeAmount)}</strong></div>
+                  <div><span>Feed</span><strong>{terminal.feedStatus === "live" ? "Live" : terminal.feedStatus === "simulated" ? "Sim" : "Stale"}</strong></div>
+                  <div><span>Updated</span><strong>{feedUpdatedLabel}</strong></div>
                   <div><span>Position</span><strong>{terminal.positions.find((p) => p.symbol === symbol)?.quantity ?? 0}</strong></div>
                 </div>
               </article>
@@ -337,8 +372,8 @@ export default async function TradeNowPage({ searchParams }: TradeNowPageProps) 
                         <span>{item.symbol}</span>
                         <span>{formatPrice(item.price)}</span>
                         <span className={Number(item.changeAmount ?? 0) >= 0 ? "positive" : "negative"}>{formatSigned(item.changeAmount)}</span>
-                        <span>{formatPrice(Number(item.price ?? 0) - tickSize)}</span>
-                        <span>{formatPrice(Number(item.price ?? 0) + tickSize)}</span>
+                        <span>{formatPrice(Number(item.price ?? 0) - (Number(item.tickSize ?? tickSize) * getDisplaySpreadTicks(item.symbol, terminal.feedStatus)))}</span>
+                        <span>{formatPrice(Number(item.price ?? 0) + (Number(item.tickSize ?? tickSize) * getDisplaySpreadTicks(item.symbol, terminal.feedStatus)))}</span>
                       </a>
                     ))}
                   </div>

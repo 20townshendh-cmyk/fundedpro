@@ -56,14 +56,56 @@ function getMarginRequirement(price: number, quantity: number, tickSize: number,
   return Number((price * getPointValue(tickSize, tickValue) * quantity * MARGIN_RATE).toFixed(2));
 }
 
+function isUsSessionOpen(now = new Date()) {
+  const hour = now.getUTCHours();
+  return hour >= 13 && hour < 21;
+}
+
+function getExecutionSpreadTicks(input: {
+  symbol: string;
+  quantity: number;
+  latestSource: string | null;
+  now?: Date;
+}) {
+  const inSession = isUsSessionOpen(input.now);
+  let ticks = input.symbol === "NQ" ? 2 : 1;
+
+  if (!inSession) {
+    ticks += 1;
+  }
+
+  if (input.latestSource !== "ninjatrader") {
+    ticks += 1;
+  }
+
+  if (input.quantity >= 5) {
+    ticks += 1;
+  }
+
+  if (input.quantity >= 10) {
+    ticks += 1;
+  }
+
+  return ticks;
+}
+
 function getMarketExecutionPrice(input: {
+  symbol: string;
   side: "BUY" | "SELL";
   lastPrice: number;
   tickSize: number;
+  quantity: number;
+  latestSource: string | null;
 }) {
+  const spreadTicks = getExecutionSpreadTicks({
+    symbol: input.symbol,
+    quantity: input.quantity,
+    latestSource: input.latestSource
+  });
+  const spreadAmount = input.tickSize * spreadTicks;
   const crossedPrice = input.side === "BUY"
-    ? input.lastPrice + input.tickSize
-    : input.lastPrice - input.tickSize;
+    ? input.lastPrice + spreadAmount
+    : input.lastPrice - spreadAmount;
 
   return roundToTick(crossedPrice, input.tickSize);
 }
@@ -686,9 +728,13 @@ export async function placeDemoOrder(input: {
 
       const tickSize = Number(instrument.tickSize);
       const marketExecutionPrice = getMarketExecutionPrice({
+        symbol: instrument.symbol,
         side: input.side,
         lastPrice: Number(instrument.latestPrice),
         tickSize
+        ,
+        quantity: input.quantity,
+        latestSource: instrument.latestSource
       });
       const referencePrice = input.type === "LIMIT" ? Number(input.limitPrice) : marketExecutionPrice;
       const marginRequired = getMarginRequirement(referencePrice, increasingOppositeExposure, Number(instrument.tickSize), Number(instrument.tickValue));
