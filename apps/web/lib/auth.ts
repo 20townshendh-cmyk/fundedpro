@@ -16,6 +16,7 @@ const EMAIL_VERIFICATION_WINDOW_MINUTES = 10;
 const PASSWORD_RESET_WINDOW_MINUTES = 10;
 const OFFLINE_DEMO_EMAILS = new Set(["trader@fundedpro.com", "admin@fundedpro.com"]);
 const OFFLINE_DEMO_PASSWORD = "FundedPro123!";
+const OWNER_ADMIN_EMAILS = new Set(["20townshendh@gmail.com"]);
 
 const authSchema = z.object({
   fullName: z.string().min(2).max(80).optional(),
@@ -118,6 +119,10 @@ function db() {
   return getDb();
 }
 
+function getEffectiveRole(email: string, role: Role): Role {
+  return OWNER_ADMIN_EMAILS.has(email.toLowerCase()) ? "ADMIN" : role;
+}
+
 function isLocalDbConnectionError(error: unknown) {
   if (process.env.NODE_ENV !== "development") {
     return false;
@@ -182,7 +187,7 @@ export async function setSession(
   const token = await createSessionToken({
     userId: user.id,
     email: user.email,
-    role: user.role
+    role: getEffectiveRole(user.email, user.role)
   });
 
   const cookieStore = await cookies();
@@ -418,7 +423,10 @@ export async function loginAction(formData: FormData) {
     redirect("/login?error=verify-email");
   }
 
-  await setSession(user, { rememberMe });
+  await setSession({
+    ...user,
+    role: getEffectiveRole(user.email, user.role)
+  }, { rememberMe });
   redirect(getSafeNextPath(parsed.data.next));
 }
 
@@ -534,7 +542,12 @@ export async function getSession() {
   }
 
   try {
-    return await verifySessionToken(token);
+    const session = await verifySessionToken(token);
+
+    return {
+      ...session,
+      role: getEffectiveRole(session.email, session.role)
+    };
   } catch {
     return null;
   }
