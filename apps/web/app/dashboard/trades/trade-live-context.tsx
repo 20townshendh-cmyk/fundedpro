@@ -43,13 +43,8 @@ export function TradeLiveProvider({ accountId, initialState, children }: TradeLi
   }, [initialState]);
 
   useEffect(() => {
-    if (!accountId) {
-      return;
-    }
-
     let cancelled = false;
     let inFlight = false;
-    const query = new URLSearchParams({ accountId });
 
     const refresh = async () => {
       if (inFlight) {
@@ -59,7 +54,10 @@ export function TradeLiveProvider({ accountId, initialState, children }: TradeLi
       inFlight = true;
 
       try {
-        const requestQuery = new URLSearchParams(query);
+        const requestQuery = new URLSearchParams();
+        if (accountId) {
+          requestQuery.set("accountId", accountId);
+        }
         requestQuery.set("_ts", String(Date.now()));
         const response = await fetch(`/api/demo-trading/live-state?${requestQuery.toString()}`, { cache: "no-store" });
         if (!response.ok || cancelled) {
