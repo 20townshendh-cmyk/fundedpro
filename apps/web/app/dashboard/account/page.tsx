@@ -192,6 +192,10 @@ export default async function AccountDetailPage({ searchParams }: AccountPagePro
     };
   });
 
+  if (!accounts.length || !plan) {
+    redirect("/dashboard");
+  }
+
   const selectedAccount = accounts.find((account) => account.id === accountId) ?? accounts[0] ?? null;
   const toastItems = provisioned
     ? [{ id: "account-provisioned", tone: "success" as const, message: "Trading account provisioned. Your internal platform credentials have been emailed and your account is ready." }]

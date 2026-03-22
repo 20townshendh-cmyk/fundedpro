@@ -140,6 +140,21 @@ export default async function TradeNowPage({ searchParams }: TradeNowPageProps) 
   const loginErrorMessage = filters.error === "terminal-login" ? errorMessage : null;
 
   if (!hasTerminalAccess) {
+    const db = getDb();
+    const userAccounts = await db.query<{ id: string }>(
+      `
+        SELECT "id"
+        FROM "TradingAccount"
+        WHERE "userId" = $1
+        LIMIT 1
+      `,
+      [session.userId]
+    );
+
+    if (!userAccounts.rowCount) {
+      redirect("/dashboard");
+    }
+
     return (
       <SiteShell>
         <main className="trade-terminal-login-shell">

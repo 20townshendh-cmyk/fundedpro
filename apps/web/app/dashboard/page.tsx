@@ -583,6 +583,10 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
+  if (!activeAccount || !latestOrder) {
+    return renderOfflineDemoDashboard(session);
+  }
+
   const displayName = getDisplayName(user.fullName, session.email);
   const trades = internalSnapshot?.closedTrades ?? [];
   const balance = Number(activeAccount?.currentBalance ?? 0);
