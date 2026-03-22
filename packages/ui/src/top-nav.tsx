@@ -56,12 +56,7 @@ export function TopNav() {
       <div className="top-nav">
         <a href="/" className="brand-link" onClick={closeMenu}>
           <LogoMark />
-          <span className="brand-copy">
-            <span className="brand-text">FundedPro</span>
-            <span className="mobile-build-badge" aria-label="Mobile build marker">
-              m-e24831e
-            </span>
-          </span>
+          <span className="brand-text">FundedPro</span>
         </a>
 
         <button

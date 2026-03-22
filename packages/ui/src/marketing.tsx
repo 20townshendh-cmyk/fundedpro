@@ -132,21 +132,23 @@ export function HomeHero() {
           <h1 className="hero-title home-hero-mobile-title">
             Trade Like a Professional
             {" "}
-            <span className="accent-text">Futures Trader</span>
+            <span className="accent-text">Futures Analyst</span>
           </h1>
           <p className="hero-copy home-hero-mobile-copy">
-            Prove your skills in our one step evaluation and unlock a cleaner path to simulated firm capital.
+            Prove your skills in our one step evaluation, and receive up to $2M in simulated funds from the firm.
           </p>
           <div className="hero-trust-strip home-hero-mobile-trust">
             <strong>Excellent</strong>
-            <span>3,094 reviews on Trustpilot</span>
+            <span className="hero-stars">★★★★★</span>
+            <span>3,094 reviews</span>
+            <span>on Trustpilot</span>
           </div>
           <div className="button-row hero-button-row home-hero-mobile-actions">
             <a href="/signup" style={primaryButtonStyle} className="button-primary">
-              Start Evaluation
+              Start FundedPro Evaluation
             </a>
             <a href="/challenges" style={ghostButtonStyle} className="button-secondary">
-              View Plans
+              View Challenge Plans
             </a>
           </div>
           <div className="hero-metrics-band home-hero-mobile-metrics">
