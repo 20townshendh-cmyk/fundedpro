@@ -29,6 +29,13 @@ export default async function AdminSettingsPage() {
       note: `Outbound mail from ${env.resendFromEmail}. Verification, reset, order, and credentials emails all use this sender.`
     },
     { label: "Google OAuth", value: env.googleClientId && env.googleClientSecret ? "Configured" : "Not configured", note: "Optional social login." },
+    {
+      label: "NinjaTrader ingest",
+      value: env.ninjaTraderIngestToken ? "Ready for live ticks" : "Missing ingest token",
+      note: env.ninjaTraderIngestToken
+        ? "The /api/market-data/ninjatrader endpoint can accept authenticated ES/NQ ticks."
+        : "Set NINJATRADER_INGEST_TOKEN to accept authenticated live tick ingest."
+    },
     { label: "Trade credentials", value: env.tradingCredentialSecret ? "Protected" : "Missing secret", note: "Encryption for trading passwords and cookies." },
     { label: "Runtime", value: env.nodeEnv, note: `Base URL ${env.appUrl}.` }
   ];
@@ -63,6 +70,10 @@ export default async function AdminSettingsPage() {
                 <article className="inline-metric">
                   <span>Platform</span>
                   <strong>Phynic</strong>
+                </article>
+                <article className="inline-metric">
+                  <span>Live ticks</span>
+                  <strong>{env.ninjaTraderIngestToken ? "Ready" : "Missing token"}</strong>
                 </article>
                 <article className="inline-metric">
                   <span>Auth</span>
@@ -125,6 +136,11 @@ export default async function AdminSettingsPage() {
                   <strong>Protected</strong>
                   <span>Admin routes are gated behind authenticated admin session checks.</span>
                 </div>
+                <div className="session-row">
+                  <span>Market data</span>
+                  <strong>{env.ninjaTraderIngestToken ? "Ready for ingest" : "Needs token"}</strong>
+                  <span>Trade Now can accept authenticated live ES/NQ ticks through the NinjaTrader ingest route.</span>
+                </div>
               </div>
             </article>
 
@@ -150,6 +166,37 @@ export default async function AdminSettingsPage() {
                   <span>3</span>
                   <strong>Expand audit coverage</strong>
                   <span>Log future settings and publishing changes with actor attribution.</span>
+                </div>
+              </div>
+            </article>
+
+            <article className="surface-card desk-card">
+              <div className="detail-head">
+                <div>
+                  <span className="muted-label">Live feed setup</span>
+                  <strong className="metric-value">NinjaTrader ingest checklist</strong>
+                </div>
+              </div>
+              <div className="session-table">
+                <div className="session-row">
+                  <span>Endpoint</span>
+                  <strong>/api/market-data/ninjatrader</strong>
+                  <span>POST authenticated ES / NQ ticks here to let Trade Now prefer real incoming prices.</span>
+                </div>
+                <div className="session-row">
+                  <span>Auth header</span>
+                  <strong>Bearer token</strong>
+                  <span>Use the NINJATRADER_INGEST_TOKEN value as the bearer token from your external bridge.</span>
+                </div>
+                <div className="session-row">
+                  <span>Payload</span>
+                  <strong>{"{ ticks: [...] }"}</strong>
+                  <span>Each tick should include symbol, price, and optional timestamp for ES and NQ.</span>
+                </div>
+                <div className="session-row">
+                  <span>Status board</span>
+                  <strong>/admin/sync</strong>
+                  <span>Check the admin sync board to confirm whether the latest ES / NQ ticks are live or simulated.</span>
                 </div>
               </div>
             </article>

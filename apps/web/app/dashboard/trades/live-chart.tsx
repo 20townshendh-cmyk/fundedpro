@@ -43,6 +43,7 @@ export function LiveChart({ symbol, initialCandles, lastPrice, change, linkedSym
   const [currentChange, setCurrentChange] = useState(change);
   const [isLoading, setIsLoading] = useState(false);
   const [feedBadge, setFeedBadge] = useState<"live" | "simulated" | "delayed" | "loading">("loading");
+  const [lastTickAt, setLastTickAt] = useState<string | null>(null);
 
   function normalizeCandles(candles: DemoCandle[]) {
     return [...candles]
@@ -198,6 +199,7 @@ export function LiveChart({ symbol, initialCandles, lastPrice, change, linkedSym
           lastPrice: number;
           source: "INTERNAL" | "DELAYED_EXTERNAL" | "EMPTY";
           tickSource: "ninjatrader" | "simulated" | null;
+          lastTickAt: string | null;
         };
 
         if (cancelled || !seriesRef.current) {
@@ -208,6 +210,7 @@ export function LiveChart({ symbol, initialCandles, lastPrice, change, linkedSym
         setCurrentChange(data.lastPrice - currentPriceRef.current);
         currentPriceRef.current = data.lastPrice;
         setCurrentPrice(data.lastPrice);
+        setLastTickAt(data.lastTickAt);
         setFeedBadge(
           data.source === "DELAYED_EXTERNAL"
             ? "delayed"
@@ -287,6 +290,11 @@ export function LiveChart({ symbol, initialCandles, lastPrice, change, linkedSym
           {!isLoading && feedBadge === "live" ? <span className="trade-data-badge live">Live Ticks</span> : null}
           {!isLoading && feedBadge === "simulated" ? <span className="trade-data-badge simulated">Simulated Live</span> : null}
           {!isLoading && feedBadge === "delayed" ? <span className="trade-data-badge delayed">Delayed Fallback</span> : null}
+          {!isLoading && lastTickAt ? (
+            <span className="trade-data-badge simulated">
+              Updated {new Date(lastTickAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+            </span>
+          ) : null}
           <strong>{currentPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
           <span className={currentChange >= 0 ? "positive" : "negative"}>
             {currentChange.toLocaleString("en-US", { signDisplay: "always", minimumFractionDigits: 2, maximumFractionDigits: 2 })}

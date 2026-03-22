@@ -3,6 +3,8 @@ import { getDb } from "@fundedpro/db";
 import { getWebEnv } from "../../../../lib/env";
 import { ninjaTraderTickBatchSchema, persistNinjaTraderTicks } from "../../../../lib/market-data";
 
+const LIVE_INGEST_FRESHNESS_MS = 3_000;
+
 function isAuthorized(request: Request) {
   const token = getWebEnv().ninjaTraderIngestToken;
 
@@ -46,12 +48,15 @@ export async function GET() {
 
   return NextResponse.json({
     configured: true,
-    status: "ready",
+    status: latestTicks.rows.some((row) => Date.now() - row.createdAt.getTime() <= LIVE_INGEST_FRESHNESS_MS) ? "live" : "stale",
+    freshnessMs: LIVE_INGEST_FRESHNESS_MS,
     symbols: latestTicks.rows.map((row) => ({
       symbol: row.symbol,
       price: row.price,
       source: row.source,
-      createdAt: row.createdAt.toISOString()
+      createdAt: row.createdAt.toISOString(),
+      ageMs: Date.now() - row.createdAt.getTime(),
+      fresh: Date.now() - row.createdAt.getTime() <= LIVE_INGEST_FRESHNESS_MS
     }))
   });
 }
