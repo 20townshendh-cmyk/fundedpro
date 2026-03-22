@@ -11438,40 +11438,66 @@ h6 {
   }
 
   .sidebar-brand {
-    margin-bottom: 0 !important;
+    display: none !important;
   }
 
   .sidebar-mobile-nav {
-    display: grid !important;
-    gap: 10px !important;
+    display: none !important;
   }
 
-  .sidebar-mobile-toggle {
-    min-height: 52px !important;
-    padding: 0 16px !important;
+  .dashboard-sidebar {
     display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    border: 1px solid rgba(92, 242, 168, 0.22) !important;
-    border-radius: 14px !important;
-    background: linear-gradient(180deg, rgba(14, 35, 28, 0.96), rgba(10, 23, 18, 0.94)) !important;
-    color: var(--text) !important;
-    font-size: 0.98rem !important;
-    font-weight: 700 !important;
-    cursor: pointer !important;
-  }
-
-  .sidebar-mobile-panel {
-    padding-top: 4px !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    padding: 10px !important;
+    border-radius: 18px !important;
+    background: linear-gradient(180deg, rgba(13, 36, 28, 0.96), rgba(7, 18, 14, 0.92)) !important;
   }
 
   .sidebar-nav-desktop,
   .sidebar-logout-desktop {
+    display: flex !important;
+  }
+
+  .sidebar-nav {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding: 0 2px 2px !important;
+    margin: 0 !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .sidebar-nav::-webkit-scrollbar {
     display: none !important;
   }
 
-  .sidebar-mobile-logout .ghost-button {
+  .sidebar-link,
+  .sidebar-link.sidebar-link-gold {
+    width: auto !important;
+    min-width: max-content !important;
+    min-height: 42px !important;
+    padding: 0 14px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 999px !important;
+    white-space: nowrap !important;
+    font-size: 0.86rem !important;
+  }
+
+  .sidebar-logout-desktop {
+    margin-top: 0 !important;
+  }
+
+  .sidebar-logout-desktop .ghost-button {
     width: 100% !important;
+    min-height: 44px !important;
+    border-radius: 999px !important;
   }
 
   .account-page-fixed,
