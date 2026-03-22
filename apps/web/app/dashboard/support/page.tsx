@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { getDb } from "@fundedpro/db";
 import { Footer, SiteShell, TopNav } from "@fundedpro/ui";
 import { getSession, logoutAction } from "../../../lib/auth";
 
@@ -8,20 +7,6 @@ export default async function SupportPage() {
 
   if (!session) {
     redirect("/login");
-  }
-
-  const db = getDb();
-  const accountSummary = await db.query<{ totalAccounts: string }>(
-    `
-      SELECT COUNT(*)::text AS "totalAccounts"
-      FROM "TradingAccount"
-      WHERE "userId" = $1
-    `,
-    [session.userId]
-  );
-
-  if (!Number(accountSummary.rows[0]?.totalAccounts ?? "0")) {
-    redirect("/dashboard");
   }
 
   return (

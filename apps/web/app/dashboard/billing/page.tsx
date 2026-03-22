@@ -80,10 +80,6 @@ export default async function BillingPage() {
   ]);
   const summary = accountSummary.rows[0] ?? { totalAccounts: "0", latestLogin: null };
 
-  if (!Number(summary.totalAccounts) && !orderHistory.rows.length) {
-    redirect("/dashboard");
-  }
-
   return (
     <SiteShell>
       <TopNav />
