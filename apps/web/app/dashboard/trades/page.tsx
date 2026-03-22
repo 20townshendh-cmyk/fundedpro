@@ -87,6 +87,26 @@ function isTimeframe(value: string | undefined): value is Timeframe {
   return value === "1m" || value === "5m" || value === "15m" || value === "1h" || value === "1d" || value === "1w";
 }
 
+function renderEmptyTradeNowState() {
+  return (
+    <SiteShell>
+      <main className="trade-terminal-login-shell">
+        <section className="trade-terminal-login-card">
+          <div className="trade-terminal-login-brand">
+            <span className="trade-terminal-login-mark" />
+            <strong>fundedpro terminal</strong>
+          </div>
+          <p className="trade-terminal-login-copy">Trade Now unlocks after your first challenge account is provisioned. Once checkout completes, this terminal will use your dedicated trading login instead of your website password.</p>
+          <div className="trade-terminal-login-help" style={{ justifyContent: "space-between", gap: "12px" }}>
+            <a href="/checkout">Buy Challenge</a>
+            <a href="/dashboard/account">Account Detail</a>
+          </div>
+        </section>
+      </main>
+    </SiteShell>
+  );
+}
+
 export default async function TradeNowPage({ searchParams }: TradeNowPageProps) {
   const session = await getSession();
   if (!session) redirect("/login?next=%2Fdashboard%2Ftrades");
@@ -152,7 +172,7 @@ export default async function TradeNowPage({ searchParams }: TradeNowPageProps) 
     );
 
     if (!userAccounts.rowCount) {
-      redirect("/dashboard");
+      return renderEmptyTradeNowState();
     }
 
     return (
