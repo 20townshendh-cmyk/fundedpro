@@ -134,6 +134,18 @@ export function HomeHero() {
             <div className="home-hero-mobile-scene">
               <HeroTreeScene />
             </div>
+            <div className="home-hero-mobile-tree">
+              <span className="home-hero-mobile-tree-glow" />
+              <span className="home-hero-mobile-tree-trunk" />
+              <span className="home-hero-mobile-tree-branch branch-left-low" />
+              <span className="home-hero-mobile-tree-branch branch-right-low" />
+              <span className="home-hero-mobile-tree-branch branch-left-high" />
+              <span className="home-hero-mobile-tree-branch branch-right-high" />
+              <span className="home-hero-mobile-tree-canopy canopy-main" />
+              <span className="home-hero-mobile-tree-canopy canopy-left" />
+              <span className="home-hero-mobile-tree-canopy canopy-right" />
+              <span className="home-hero-mobile-tree-canopy canopy-top" />
+            </div>
           </div>
           <span className="hero-kicker">Brought to you by FundedPro</span>
           <h1 className="hero-title home-hero-mobile-title">

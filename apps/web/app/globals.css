@@ -12856,6 +12856,114 @@ h6 {
     z-index: 0 !important;
   }
 
+  .home-hero-mobile-tree {
+    position: absolute !important;
+    left: 50% !important;
+    top: 28px !important;
+    width: 220px !important;
+    height: 320px !important;
+    margin-left: -110px !important;
+    transform-origin: center bottom !important;
+    animation: mobile-hero-tree-sway 6.8s ease-in-out infinite !important;
+    z-index: 2 !important;
+    opacity: 0.95 !important;
+  }
+
+  .home-hero-mobile-tree-glow {
+    position: absolute !important;
+    inset: 18px 0 28px !important;
+    border-radius: 50% !important;
+    background: radial-gradient(circle, rgba(197, 255, 221, 0.28), rgba(111, 255, 157, 0.1) 58%, transparent 76%) !important;
+    filter: blur(18px) !important;
+  }
+
+  .home-hero-mobile-tree-trunk {
+    position: absolute !important;
+    left: 50% !important;
+    bottom: 26px !important;
+    width: 28px !important;
+    height: 170px !important;
+    margin-left: -14px !important;
+    border-radius: 20px !important;
+    background: linear-gradient(180deg, rgba(238, 255, 245, 0.95), rgba(171, 255, 204, 0.92)) !important;
+    box-shadow:
+      0 0 10px rgba(241, 255, 246, 0.56),
+      0 0 34px rgba(122, 255, 170, 0.28) !important;
+  }
+
+  .home-hero-mobile-tree-branch {
+    position: absolute !important;
+    height: 10px !important;
+    border-radius: 999px !important;
+    background: linear-gradient(90deg, rgba(235, 255, 243, 0.88), rgba(161, 255, 197, 0.84)) !important;
+    box-shadow: 0 0 14px rgba(183, 255, 211, 0.22) !important;
+  }
+
+  .home-hero-mobile-tree-branch.branch-left-low {
+    left: 38px !important;
+    bottom: 126px !important;
+    width: 86px !important;
+    transform: rotate(-28deg) !important;
+  }
+
+  .home-hero-mobile-tree-branch.branch-right-low {
+    right: 38px !important;
+    bottom: 126px !important;
+    width: 86px !important;
+    transform: rotate(28deg) !important;
+  }
+
+  .home-hero-mobile-tree-branch.branch-left-high {
+    left: 62px !important;
+    bottom: 186px !important;
+    width: 58px !important;
+    transform: rotate(-46deg) !important;
+  }
+
+  .home-hero-mobile-tree-branch.branch-right-high {
+    right: 62px !important;
+    bottom: 186px !important;
+    width: 58px !important;
+    transform: rotate(46deg) !important;
+  }
+
+  .home-hero-mobile-tree-canopy {
+    position: absolute !important;
+    border-radius: 50% !important;
+    background: radial-gradient(circle, rgba(243, 255, 247, 0.72), rgba(158, 255, 196, 0.52) 58%, rgba(108, 255, 157, 0.14) 78%, transparent 90%) !important;
+    box-shadow:
+      0 0 16px rgba(230, 255, 239, 0.28),
+      0 0 38px rgba(119, 255, 168, 0.16) !important;
+  }
+
+  .home-hero-mobile-tree-canopy.canopy-main {
+    left: 42px !important;
+    top: 46px !important;
+    width: 136px !important;
+    height: 104px !important;
+  }
+
+  .home-hero-mobile-tree-canopy.canopy-left {
+    left: 10px !important;
+    top: 84px !important;
+    width: 92px !important;
+    height: 76px !important;
+  }
+
+  .home-hero-mobile-tree-canopy.canopy-right {
+    right: 10px !important;
+    top: 84px !important;
+    width: 92px !important;
+    height: 76px !important;
+  }
+
+  .home-hero-mobile-tree-canopy.canopy-top {
+    left: 58px !important;
+    top: 14px !important;
+    width: 104px !important;
+    height: 70px !important;
+  }
+
   .home-hero-mobile-card-scene .hero-orb-left {
     inset: 4px auto auto -20px !important;
     width: 230px !important;
@@ -13165,5 +13273,16 @@ h6 {
   .trade-control-panel,
   .trade-ladder-panel {
     color: rgba(242, 255, 247, 0.96) !important;
+  }
+}
+
+@keyframes mobile-hero-tree-sway {
+  0%,
+  100% {
+    transform: rotate(-2.5deg) translateX(-4px);
+  }
+
+  50% {
+    transform: rotate(2.5deg) translateX(4px);
   }
 }
