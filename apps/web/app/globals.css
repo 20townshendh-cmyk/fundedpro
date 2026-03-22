@@ -2024,6 +2024,132 @@ h6 {
   }
 }
 
+@media (max-width: 768px) {
+  .trade-now-showcase-copy {
+    justify-items: start;
+    text-align: left;
+    gap: 12px;
+  }
+
+  .trade-now-showcase-copy .section-title,
+  .trade-now-showcase-copy .section-copy {
+    max-width: none;
+  }
+
+  .trade-now-shot {
+    width: 100%;
+  }
+
+  .trade-now-shot-canvas {
+    width: 100%;
+    padding: 16px;
+    border-radius: 28px;
+    overflow: hidden;
+  }
+
+  .trade-now-shot-canvas::before,
+  .trade-now-shot-canvas::after,
+  .trade-now-ambient-chip,
+  .trade-now-pointer {
+    display: none;
+  }
+
+  .trade-now-shot-header,
+  .trade-now-shot-body {
+    transform: none;
+  }
+
+  .trade-now-shot-header {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    padding: 14px;
+    border-radius: 18px;
+  }
+
+  .trade-now-shot-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .trade-now-shot-toolbar .accounts,
+  .trade-now-shot-metrics {
+    display: none;
+  }
+
+  .trade-now-shot-body {
+    grid-template-columns: 1fr;
+    min-height: 0;
+    border-radius: 18px;
+  }
+
+  .trade-now-shot-main {
+    order: 1;
+  }
+
+  .trade-now-shot-risk {
+    order: 2;
+    border-left: 0;
+    border-top: 1px solid rgba(148, 163, 184, 0.08);
+  }
+
+  .trade-now-shot-ladder {
+    order: 3;
+    border-right: 0;
+    border-top: 1px solid rgba(148, 163, 184, 0.08);
+  }
+
+  .trade-now-shot-timeframes,
+  .trade-now-shot-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .trade-now-shot-timeframes::-webkit-scrollbar,
+  .trade-now-shot-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .trade-now-shot-chart {
+    min-height: 320px;
+    margin: 0 12px;
+  }
+
+  .trade-now-shot-candles {
+    inset: 46px 36px 34px 12px;
+  }
+
+  .trade-now-shot-chart-axis {
+    display: none;
+  }
+
+  .trade-now-shot-chart-timeline {
+    padding: 0 10px 10px;
+    gap: 10px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .trade-now-shot-chart-timeline::-webkit-scrollbar {
+    display: none;
+  }
+
+  .trade-now-shot-bottom {
+    grid-template-columns: 1fr;
+  }
+
+  .trade-now-shot-market,
+  .trade-now-shot-blotter,
+  .trade-now-shot-ladder,
+  .trade-now-shot-risk {
+    padding: 14px;
+  }
+
+  .trade-now-shot-risk-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .pointer-toolbar {
   top: 14px;
   right: 286px;
@@ -3522,6 +3648,70 @@ h6 {
   color: inherit;
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+@media (max-width: 768px) {
+  .evaluation-board {
+    padding: 18px;
+    border-radius: 24px;
+  }
+
+  .evaluation-pill-heading {
+    margin-bottom: 14px;
+  }
+
+  .evaluation-pill-row.compact {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    justify-content: stretch;
+  }
+
+  .evaluation-pill.compact {
+    width: 100%;
+    min-width: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 6px;
+    padding: 14px 16px;
+    border-radius: 18px;
+  }
+
+  .evaluation-pill-price-group,
+  .evaluation-pill-savings {
+    line-height: 1.2;
+  }
+
+  .evaluation-promo-note,
+  .evaluation-limit-note {
+    text-align: center;
+  }
+
+  .evaluation-limit-note {
+    font-size: 0.92rem;
+    line-height: 1.55;
+  }
+
+  .evaluation-table-wrap {
+    margin-top: 20px;
+    border-radius: 22px;
+  }
+
+  .evaluation-table {
+    min-width: 560px;
+  }
+
+  .evaluation-table th,
+  .evaluation-table td {
+    padding: 14px 16px;
+  }
+
+  .evaluation-activation-note {
+    padding: 16px 18px;
+    border-radius: 20px;
+    font-size: 0.94rem;
+  }
 }
 
 .home-certificate-band {
@@ -9860,13 +10050,24 @@ h6 {
 
 @media (max-width: 720px) {
   .support-assistant {
-    right: 16px;
-    bottom: 16px;
+    right: 12px;
+    bottom: 12px;
   }
 
   .support-assistant-panel {
     width: min(360px, calc(100% - 24px));
     padding: 16px;
+  }
+
+  .support-assistant-trigger {
+    width: 58px;
+    height: 58px;
+    box-shadow: 0 12px 28px rgba(20, 32, 112, 0.34);
+  }
+
+  .support-assistant-trigger-icon {
+    width: 26px;
+    height: 18px;
   }
 
   .support-assistant-form {
