@@ -30,8 +30,10 @@ type OrderRow = {
   type: "MARKET" | "LIMIT";
   status: "WORKING" | "FILLED" | "CANCELED" | "REJECTED";
   quantity: number;
+  filledQuantity: number;
   remainingQuantity: number;
   limitPrice: string | null;
+  averageFillPrice?: string | null;
 };
 
 type InstrumentMeta = {
@@ -108,6 +110,22 @@ function getMarketExecutionPrice(input: {
     : input.lastPrice - spreadAmount;
 
   return roundToTick(crossedPrice, input.tickSize);
+}
+
+function getFillSlices(quantity: number) {
+  if (quantity <= 3) {
+    return [quantity];
+  }
+
+  if (quantity <= 6) {
+    const first = Math.max(1, Math.floor(quantity / 2));
+    return [first, quantity - first];
+  }
+
+  const first = Math.max(1, Math.floor(quantity * 0.4));
+  const second = Math.max(1, Math.floor(quantity * 0.35));
+  const third = quantity - first - second;
+  return [first, second, third].filter((part) => part > 0);
 }
 
 function getRealizedPnl(input: {
@@ -314,6 +332,7 @@ async function applyFill(
     order: OrderRow;
     instrument: InstrumentMeta;
     fillPrice: number;
+    fillQuantity?: number;
   }
 ) {
   const positionResult = await client.query<{
@@ -332,7 +351,8 @@ async function applyFill(
   );
 
   const existingPosition = positionResult.rows[0];
-  const quantity = input.order.remainingQuantity || input.order.quantity;
+  const availableQuantity = input.order.remainingQuantity || input.order.quantity;
+  const quantity = Math.min(input.fillQuantity ?? availableQuantity, availableQuantity);
   const orderSide = input.order.side === "BUY" ? "LONG" : "SHORT";
   const tickSize = Number(input.instrument.tickSize);
   const tickValue = Number(input.instrument.tickValue);
@@ -430,28 +450,38 @@ async function applyFill(
     ]
   );
 
+  const nextFilledQuantity = input.order.filledQuantity + quantity;
+  const nextRemainingQuantity = Math.max(0, availableQuantity - quantity);
+  const previousAverageFillPrice = Number(input.order.averageFillPrice ?? input.fillPrice);
+  const nextAverageFillPrice = Number(
+    (
+      ((previousAverageFillPrice * input.order.filledQuantity) + (input.fillPrice * quantity)) /
+      Math.max(1, nextFilledQuantity)
+    ).toFixed(6)
+  );
+
   await client.query(
     `
       UPDATE "DemoOrder"
       SET
-        "status" = 'FILLED',
         "submittedPrice" = COALESCE("submittedPrice", $1),
-        "averageFillPrice" = $1,
-        "filledQuantity" = $2,
-        "remainingQuantity" = 0,
-        "filledAt" = NOW(),
+        "averageFillPrice" = $2,
+        "filledQuantity" = $3,
+        "remainingQuantity" = $4,
+        "status" = CASE WHEN $4 <= 0 THEN 'FILLED'::"DemoOrderStatus" ELSE 'WORKING'::"DemoOrderStatus" END,
+        "filledAt" = CASE WHEN $4 <= 0 THEN NOW() ELSE "filledAt" END,
         "updatedAt" = NOW()
-      WHERE "id" = $3
+      WHERE "id" = $5
     `,
-    [input.fillPrice, quantity, input.order.id]
+    [input.fillPrice, nextAverageFillPrice, nextFilledQuantity, nextRemainingQuantity, input.order.id]
   );
 
   await logActivity(client, {
     userId: input.order.userId,
     demoAccountId: input.order.demoAccountId,
-    type: "ORDER_FILLED",
-    summary: `${input.order.side} ${quantity} ${input.instrument.symbol} filled at ${input.fillPrice.toFixed(2)}.`,
-    metadata: { orderId: input.order.id, symbol: input.instrument.symbol, quantity, realizedPnl },
+    type: nextRemainingQuantity > 0 ? "ORDER_PARTIAL_FILL" : "ORDER_FILLED",
+    summary: `${input.order.side} ${quantity} ${input.instrument.symbol} filled at ${input.fillPrice.toFixed(2)}${nextRemainingQuantity > 0 ? `, ${nextRemainingQuantity} remaining` : "."}`,
+    metadata: { orderId: input.order.id, symbol: input.instrument.symbol, quantity, realizedPnl, remainingQuantity: nextRemainingQuantity },
     orderId: input.order.id,
     fillId
   });
@@ -562,7 +592,7 @@ export async function advanceDemoMarket() {
 
     const workingOrdersResult = await client.query<OrderRow>(
       `
-        SELECT "id", "userId", "demoAccountId", "instrumentId", "side", "type", "status", "quantity", "remainingQuantity", "limitPrice"::text
+        SELECT "id", "userId", "demoAccountId", "instrumentId", "side", "type", "status", "quantity", "filledQuantity", "remainingQuantity", "limitPrice"::text, "averageFillPrice"::text
         FROM "DemoOrder"
         WHERE "status" = 'WORKING' AND "type" = 'LIMIT'
         ORDER BY "createdAt" ASC
@@ -584,10 +614,15 @@ export async function advanceDemoMarket() {
         (order.side === "SELL" && marketPrice >= Number(order.limitPrice));
 
       if (shouldFill) {
+        const partialQuantity = Math.min(
+          order.remainingQuantity || order.quantity,
+          Math.max(1, Math.ceil((order.remainingQuantity || order.quantity) / 2))
+        );
         await applyFill(client, {
           order,
           instrument,
-          fillPrice: Number(order.limitPrice)
+          fillPrice: Number(order.limitPrice),
+          fillQuantity: partialQuantity
         });
         touchedDemoAccountIds.add(order.demoAccountId);
       }
@@ -782,22 +817,56 @@ export async function placeDemoOrder(input: {
       (input.side === "SELL" && input.limitPrice != null && marketPrice >= input.limitPrice);
 
     if (shouldFillImmediately) {
-      await applyFill(client, {
-        order: {
-          id: orderId,
-          userId: input.userId,
-          demoAccountId: input.demoAccountId,
-          instrumentId: input.instrumentId,
-          side: input.side,
-          type: input.type,
-          status: "WORKING",
-          quantity: input.quantity,
-          remainingQuantity,
-          limitPrice: input.limitPrice != null ? String(input.limitPrice) : null
-        },
-        instrument,
-        fillPrice: input.type === "MARKET" ? marketPrice : Number(input.limitPrice)
-      });
+      const baseOrder: OrderRow = {
+        id: orderId,
+        userId: input.userId,
+        demoAccountId: input.demoAccountId,
+        instrumentId: input.instrumentId,
+        side: input.side,
+        type: input.type,
+        status: "WORKING",
+        quantity: input.quantity,
+        filledQuantity: 0,
+        remainingQuantity,
+        limitPrice: input.limitPrice != null ? String(input.limitPrice) : null,
+        averageFillPrice: null
+      };
+
+      if (input.type === "MARKET") {
+        let workingOrder = baseOrder;
+        const slices = getFillSlices(input.quantity);
+
+        for (let index = 0; index < slices.length; index += 1) {
+          const slice = slices[index]!;
+          const extraSlippageTicks = index;
+          const sliceFillPrice = roundToTick(
+            input.side === "BUY"
+              ? marketPrice + (tickSize * extraSlippageTicks)
+              : marketPrice - (tickSize * extraSlippageTicks),
+            tickSize
+          );
+
+          await applyFill(client, {
+            order: workingOrder,
+            instrument,
+            fillPrice: sliceFillPrice,
+            fillQuantity: slice
+          });
+
+          workingOrder = {
+            ...workingOrder,
+            averageFillPrice: String(sliceFillPrice),
+            filledQuantity: workingOrder.filledQuantity + slice,
+            remainingQuantity: Math.max(0, workingOrder.remainingQuantity - slice)
+          };
+        }
+      } else {
+        await applyFill(client, {
+          order: baseOrder,
+          instrument,
+          fillPrice: Number(input.limitPrice)
+        });
+      }
     } else {
       await recalcDemoAccount(client, input.demoAccountId);
     }

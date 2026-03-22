@@ -334,12 +334,14 @@ export async function getDemoTradingTerminal(userId: string, search?: TerminalSe
           type: string;
           status: string;
           quantity: number;
+          filledQuantity: number;
+          remainingQuantity: number;
           limitPrice: string | null;
           averageFillPrice: string | null;
           createdAt: Date;
         }>(
           `
-            SELECT o."id", i."symbol", o."side", o."type", o."status", o."quantity", o."limitPrice"::text, o."averageFillPrice"::text, o."createdAt"
+            SELECT o."id", i."symbol", o."side", o."type", o."status", o."quantity", o."filledQuantity", o."remainingQuantity", o."limitPrice"::text, o."averageFillPrice"::text, o."createdAt"
             FROM "DemoOrder" o
             JOIN "Instrument" i ON i."id" = o."instrumentId"
             WHERE o."demoAccountId" = $1

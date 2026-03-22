@@ -396,10 +396,14 @@ export default async function TradeNowPage({ searchParams }: TradeNowPageProps) 
                       {terminal.orders.length ? terminal.orders.map((order) => (
                         <div key={order.id} className="trade-table-row">
                           <span>{order.side} {order.symbol}</span>
-                          <span>{order.quantity}</span>
+                          <span>
+                            {order.filledQuantity > 0 && order.remainingQuantity > 0
+                              ? `${order.filledQuantity}/${order.quantity}`
+                              : order.quantity}
+                          </span>
                           <span>{order.type}</span>
                           <span>{order.limitPrice ?? order.averageFillPrice ?? "-"}</span>
-                          <span>{order.status}</span>
+                          <span>{order.status === "WORKING" && order.filledQuantity > 0 ? "PARTIAL" : order.status}</span>
                           <span>{new Date(order.createdAt).toLocaleTimeString("en-GB")}</span>
                           {order.status === "WORKING" ? (
                             <form action={cancelDemoOrderAction}>
