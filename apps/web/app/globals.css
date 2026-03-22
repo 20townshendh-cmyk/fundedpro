@@ -12667,14 +12667,14 @@ h6 {
 @media (max-width: 768px) {
   .hero-stage {
     background:
-      radial-gradient(circle at 18% 14%, rgba(177, 255, 212, 0.24), transparent 24%),
-      radial-gradient(circle at 78% 20%, rgba(152, 255, 196, 0.2), transparent 28%),
-      radial-gradient(circle at 50% 78%, rgba(122, 255, 170, 0.2), transparent 30%),
-      linear-gradient(180deg, rgba(18, 50, 38, 0.98), rgba(11, 29, 22, 0.98)) !important;
-    border-color: rgba(168, 255, 206, 0.18) !important;
+      radial-gradient(circle at 18% 14%, rgba(199, 255, 223, 0.34), transparent 24%),
+      radial-gradient(circle at 78% 20%, rgba(170, 255, 205, 0.3), transparent 28%),
+      radial-gradient(circle at 50% 78%, rgba(146, 255, 179, 0.26), transparent 30%),
+      linear-gradient(180deg, rgba(28, 74, 56, 0.98), rgba(16, 41, 31, 0.98)) !important;
+    border-color: rgba(196, 255, 220, 0.22) !important;
     box-shadow:
-      0 28px 70px rgba(4, 18, 12, 0.34),
-      inset 0 1px 0 rgba(232, 255, 241, 0.06) !important;
+      0 28px 70px rgba(4, 18, 12, 0.28),
+      inset 0 1px 0 rgba(232, 255, 241, 0.1) !important;
   }
 
   .home-hero-mobile {
@@ -12684,28 +12684,28 @@ h6 {
 
   .home-hero-mobile-visual {
     position: relative !important;
-    min-height: 240px !important;
+    min-height: 280px !important;
     margin-top: -10px !important;
-    margin-bottom: -110px !important;
+    margin-bottom: -170px !important;
     pointer-events: none !important;
     overflow: hidden !important;
   }
 
   .home-hero-mobile-visual .hero-orb-left {
-    inset: 20px auto auto -28px !important;
-    width: 180px !important;
-    height: 180px !important;
-    background: radial-gradient(circle, rgba(212, 255, 228, 0.4), transparent 70%) !important;
-    filter: blur(10px) !important;
+    inset: 4px auto auto -20px !important;
+    width: 230px !important;
+    height: 230px !important;
+    background: radial-gradient(circle, rgba(229, 255, 238, 0.56), transparent 70%) !important;
+    filter: blur(12px) !important;
   }
 
   .home-hero-mobile-visual .hero-orb-right {
-    right: -48px !important;
-    top: 10px !important;
-    width: 260px !important;
-    height: 260px !important;
-    background: radial-gradient(circle, rgba(174, 255, 196, 0.34), transparent 68%) !important;
-    filter: blur(14px) !important;
+    right: -34px !important;
+    top: -10px !important;
+    width: 310px !important;
+    height: 310px !important;
+    background: radial-gradient(circle, rgba(188, 255, 209, 0.48), transparent 68%) !important;
+    filter: blur(16px) !important;
   }
 
   .home-hero-mobile-scene {
@@ -12717,32 +12717,32 @@ h6 {
   .home-hero-mobile-scene .glow-tree-scene {
     position: absolute !important;
     inset: 0 !important;
-    transform: scale(1.08) translateY(-8px) !important;
+    transform: scale(1.18) translateY(-2px) !important;
     opacity: 1 !important;
   }
 
   .home-hero-mobile-scene .glow-tree-scene::before {
-    width: 920px !important;
-    opacity: 0.52 !important;
-    filter: blur(42px) saturate(1.25) !important;
+    width: 980px !important;
+    opacity: 0.76 !important;
+    filter: blur(34px) saturate(1.45) brightness(1.32) !important;
   }
 
   .home-hero-mobile-scene .glow-tree-scene::after {
-    width: 660px !important;
-    opacity: 0.34 !important;
-    filter: blur(34px) saturate(1.3) !important;
+    width: 760px !important;
+    opacity: 0.52 !important;
+    filter: blur(28px) saturate(1.42) brightness(1.28) !important;
   }
 
   .home-hero-mobile-scene .tree-aura {
     opacity: 1 !important;
-    filter: blur(18px) saturate(1.3) !important;
+    filter: blur(12px) saturate(1.5) brightness(1.5) !important;
   }
 
   .home-hero-mobile-scene .tree-energy,
   .home-hero-mobile-scene .tree-canopy,
   .home-hero-mobile-scene .tree-leaf,
   .home-hero-mobile-scene .tree-spark {
-    filter: saturate(1.24) brightness(1.24) !important;
+    filter: saturate(1.45) brightness(1.58) !important;
   }
 
   .home-hero-mobile-card {
@@ -12750,24 +12750,39 @@ h6 {
     z-index: 2 !important;
     gap: 18px !important;
     padding: 24px 18px 18px !important;
-    border: 1px solid rgba(176, 255, 207, 0.26) !important;
+    border: 1px solid rgba(201, 255, 220, 0.28) !important;
     border-radius: 30px !important;
     background:
-      radial-gradient(circle at 50% 8%, rgba(220, 255, 233, 0.2), transparent 26%),
-      linear-gradient(180deg, rgba(20, 55, 41, 0.82), rgba(11, 29, 22, 0.9)) !important;
+      linear-gradient(180deg, rgba(18, 52, 39, 0.3), rgba(11, 30, 22, 0.44)) !important;
     box-shadow:
-      0 26px 60px rgba(5, 20, 14, 0.34),
-      inset 0 1px 0 rgba(237, 255, 243, 0.08) !important;
-    backdrop-filter: blur(12px) !important;
+      0 26px 60px rgba(5, 20, 14, 0.28),
+      inset 0 1px 0 rgba(237, 255, 243, 0.12) !important;
+    backdrop-filter: blur(8px) !important;
+  }
+
+  .home-hero-mobile-card::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    border-radius: inherit !important;
+    background:
+      radial-gradient(circle at 50% 18%, rgba(235, 255, 241, 0.12), transparent 26%),
+      radial-gradient(circle at 50% 62%, rgba(107, 255, 153, 0.18), transparent 42%) !important;
+    pointer-events: none !important;
+  }
+
+  .home-hero-mobile-card > * {
+    position: relative !important;
+    z-index: 1 !important;
   }
 
   .home-hero-mobile-title {
-    color: #effff3 !important;
-    text-shadow: 0 8px 24px rgba(14, 35, 25, 0.42) !important;
+    color: #f4fff7 !important;
+    text-shadow: 0 10px 28px rgba(14, 35, 25, 0.26) !important;
   }
 
   .home-hero-mobile-copy {
-    color: rgba(231, 255, 239, 0.86) !important;
+    color: rgba(236, 255, 242, 0.92) !important;
   }
 
   .hero-kicker {
@@ -12777,8 +12792,8 @@ h6 {
   }
 
   .home-hero-mobile-trust {
-    background: rgba(201, 255, 222, 0.12) !important;
-    border: 1px solid rgba(176, 255, 207, 0.18) !important;
+    background: rgba(218, 255, 231, 0.16) !important;
+    border: 1px solid rgba(196, 255, 220, 0.2) !important;
     color: #f3fff6 !important;
   }
 
@@ -12794,36 +12809,36 @@ h6 {
   }
 
   .button-secondary {
-    background: rgba(17, 48, 35, 0.72) !important;
-    border-color: rgba(176, 255, 207, 0.18) !important;
+    background: rgba(25, 65, 48, 0.6) !important;
+    border-color: rgba(196, 255, 220, 0.2) !important;
     color: #effff3 !important;
   }
 
   .home-hero-mobile-metrics {
-    background: rgba(15, 45, 32, 0.54) !important;
-    border: 1px solid rgba(176, 255, 207, 0.14) !important;
-    box-shadow: inset 0 1px 0 rgba(237, 255, 243, 0.04) !important;
+    background: rgba(21, 60, 43, 0.46) !important;
+    border: 1px solid rgba(196, 255, 220, 0.16) !important;
+    box-shadow: inset 0 1px 0 rgba(237, 255, 243, 0.06) !important;
   }
 
   .home-hero-mobile-metrics .hero-metric-tile strong {
-    color: #effff3 !important;
+    color: #f4fff7 !important;
   }
 
   .home-hero-mobile-metrics .hero-metric-tile span {
-    color: rgba(230, 255, 238, 0.74) !important;
+    color: rgba(234, 255, 241, 0.82) !important;
   }
 
   .top-nav {
-    background: rgba(20, 55, 41, 0.94) !important;
-    border-color: rgba(176, 255, 207, 0.16) !important;
+    background: rgba(28, 74, 56, 0.92) !important;
+    border-color: rgba(196, 255, 220, 0.18) !important;
     box-shadow:
-      0 16px 34px rgba(5, 19, 14, 0.28),
-      inset 0 1px 0 rgba(237, 255, 243, 0.05) !important;
+      0 16px 34px rgba(5, 19, 14, 0.22),
+      inset 0 1px 0 rgba(237, 255, 243, 0.08) !important;
   }
 
   .nav-toggle,
   .nav-action-link {
-    background: rgba(28, 74, 54, 0.84) !important;
-    border-color: rgba(176, 255, 207, 0.16) !important;
+    background: rgba(37, 92, 68, 0.82) !important;
+    border-color: rgba(196, 255, 220, 0.18) !important;
   }
 }
