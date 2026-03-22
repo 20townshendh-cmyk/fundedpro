@@ -12844,16 +12844,19 @@ h6 {
     gap: 16px !important;
   }
 
-  .home-hero-mobile-visual {
-    position: relative !important;
-    min-height: 280px !important;
-    margin-top: -10px !important;
-    margin-bottom: -170px !important;
-    pointer-events: none !important;
+  .home-hero-mobile-card {
     overflow: hidden !important;
   }
 
-  .home-hero-mobile-visual .hero-orb-left {
+  .home-hero-mobile-card-scene {
+    position: absolute !important;
+    inset: 0 !important;
+    pointer-events: none !important;
+    overflow: hidden !important;
+    z-index: 0 !important;
+  }
+
+  .home-hero-mobile-card-scene .hero-orb-left {
     inset: 4px auto auto -20px !important;
     width: 230px !important;
     height: 230px !important;
@@ -12861,7 +12864,7 @@ h6 {
     filter: blur(12px) !important;
   }
 
-  .home-hero-mobile-visual .hero-orb-right {
+  .home-hero-mobile-card-scene .hero-orb-right {
     right: -34px !important;
     top: -10px !important;
     width: 310px !important;
@@ -12928,8 +12931,9 @@ h6 {
     inset: 0 !important;
     border-radius: inherit !important;
     background:
-      radial-gradient(circle at 50% 18%, rgba(235, 255, 241, 0.12), transparent 26%),
-      radial-gradient(circle at 50% 62%, rgba(107, 255, 153, 0.18), transparent 42%) !important;
+      linear-gradient(180deg, rgba(24, 67, 49, 0.2), rgba(15, 38, 28, 0.36)),
+      radial-gradient(circle at 50% 18%, rgba(235, 255, 241, 0.08), transparent 26%),
+      radial-gradient(circle at 50% 62%, rgba(107, 255, 153, 0.12), transparent 42%) !important;
     pointer-events: none !important;
   }
 
@@ -13002,5 +13006,34 @@ h6 {
   .nav-action-link {
     background: rgba(37, 92, 68, 0.82) !important;
     border-color: rgba(196, 255, 220, 0.18) !important;
+  }
+
+  .dashboard-sidebar,
+  .dashboard-hero,
+  .surface-card,
+  .table-card,
+  .checkout-section,
+  .checkout-summary,
+  .trade-ladder-panel,
+  .trade-main-panel,
+  .trade-control-panel,
+  .trade-market-panel,
+  .trade-blotter-panel,
+  .footer-panel {
+    background: linear-gradient(180deg, rgba(28, 74, 56, 0.92), rgba(15, 38, 28, 0.88)) !important;
+    border-color: rgba(196, 255, 220, 0.16) !important;
+    box-shadow:
+      0 22px 46px rgba(5, 18, 13, 0.18),
+      inset 0 1px 0 rgba(241, 255, 246, 0.04) !important;
+  }
+
+  .table-card,
+  .surface-card,
+  .checkout-section,
+  .checkout-summary,
+  .trade-main-panel,
+  .trade-control-panel,
+  .trade-ladder-panel {
+    color: rgba(242, 255, 247, 0.96) !important;
   }
 }

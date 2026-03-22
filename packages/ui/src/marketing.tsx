@@ -127,14 +127,14 @@ export function HomeHero() {
       </div>
       <div className="home-hero-mobile">
         <TopNav />
-        <div className="home-hero-mobile-visual" aria-hidden="true">
-          <div className="hero-orb hero-orb-left" />
-          <div className="hero-orb hero-orb-right" />
-          <div className="home-hero-mobile-scene">
-            <HeroTreeScene />
-          </div>
-        </div>
         <div className="home-hero-mobile-card">
+          <div className="home-hero-mobile-card-scene" aria-hidden="true">
+            <div className="hero-orb hero-orb-left" />
+            <div className="hero-orb hero-orb-right" />
+            <div className="home-hero-mobile-scene">
+              <HeroTreeScene />
+            </div>
+          </div>
           <span className="hero-kicker">Brought to you by FundedPro</span>
           <h1 className="hero-title home-hero-mobile-title">
             Trade Like a Professional
