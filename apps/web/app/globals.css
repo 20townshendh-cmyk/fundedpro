@@ -1394,6 +1394,11 @@ h6 {
   place-items: center;
 }
 
+.trade-now-mobile-preview,
+.evaluation-mobile-cards {
+  display: none;
+}
+
 .trade-now-shot {
   display: grid;
   place-items: center;
@@ -3651,6 +3656,120 @@ h6 {
 }
 
 @media (max-width: 768px) {
+  .trade-now-mobile-preview {
+    display: grid;
+    gap: 14px;
+    width: 100%;
+    padding: 18px;
+    border-radius: 24px;
+    border: 1px solid rgba(92, 242, 168, 0.18);
+    background:
+      radial-gradient(circle at top, rgba(92, 242, 168, 0.12), transparent 34%),
+      linear-gradient(180deg, rgba(18, 35, 29, 0.98), rgba(9, 18, 15, 0.98));
+    box-shadow: 0 20px 50px rgba(2, 6, 23, 0.26);
+  }
+
+  .trade-now-mobile-preview-top,
+  .trade-now-mobile-preview-actions,
+  .trade-now-mobile-preview-stats {
+    display: grid;
+    gap: 12px;
+  }
+
+  .trade-now-mobile-preview-top {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .trade-now-mobile-preview-top div,
+  .trade-now-mobile-preview-stats article {
+    display: grid;
+    gap: 4px;
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(126, 164, 145, 0.08);
+  }
+
+  .trade-now-mobile-preview-top span,
+  .trade-now-mobile-preview-stats span {
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+
+  .trade-now-mobile-preview-top strong,
+  .trade-now-mobile-preview-stats strong {
+    color: var(--text);
+  }
+
+  .trade-now-mobile-preview-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .trade-now-mobile-preview-actions button {
+    min-height: 48px;
+    border: 0;
+    border-radius: 16px;
+    color: #04110b;
+    font: inherit;
+    font-weight: 800;
+  }
+
+  .trade-now-mobile-preview-actions .buy {
+    background: linear-gradient(135deg, #2bbf62, #80ff66);
+  }
+
+  .trade-now-mobile-preview-actions .sell {
+    background: linear-gradient(135deg, #fb5567, #ff7a59);
+    color: #fff7f8;
+  }
+
+  .trade-now-mobile-preview-chart {
+    position: relative;
+    min-height: 220px;
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid rgba(126, 164, 145, 0.08);
+    background:
+      radial-gradient(circle at 50% 0%, rgba(96, 165, 250, 0.08), transparent 28%),
+      #0b0e12;
+  }
+
+  .trade-now-mobile-preview-grid {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+    background-size: 52px 36px;
+  }
+
+  .trade-now-mobile-preview-line {
+    position: absolute;
+    inset: auto 12px 36px 12px;
+    height: 120px;
+    border-radius: 999px;
+    background:
+      linear-gradient(180deg, transparent, transparent),
+      linear-gradient(135deg, transparent 8%, rgba(34, 197, 94, 0.08) 12%, transparent 16%),
+      linear-gradient(90deg, rgba(34, 197, 94, 0.2), rgba(96, 165, 250, 0.45));
+    clip-path: polygon(0% 78%, 12% 66%, 26% 70%, 38% 48%, 52% 56%, 64% 34%, 80% 44%, 100% 16%, 100% 100%, 0% 100%);
+  }
+
+  .trade-now-mobile-preview-price {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    padding: 8px 10px;
+    border-radius: 999px;
+    background: rgba(8, 12, 18, 0.82);
+    color: #f8fafc;
+    font-weight: 700;
+  }
+
+  .trade-now-mobile-preview-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+
   .evaluation-board {
     padding: 18px;
     border-radius: 24px;
@@ -3693,18 +3812,47 @@ h6 {
     line-height: 1.55;
   }
 
-  .evaluation-table-wrap {
+  .evaluation-mobile-cards {
+    display: grid;
+    gap: 12px;
     margin-top: 20px;
-    border-radius: 22px;
   }
 
-  .evaluation-table {
-    min-width: 560px;
+  .evaluation-mobile-card {
+    display: grid;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 18px;
+    border: 1px solid rgba(126, 164, 145, 0.12);
+    background: rgba(255, 255, 255, 0.03);
   }
 
-  .evaluation-table th,
-  .evaluation-table td {
-    padding: 14px 16px;
+  .evaluation-mobile-card strong {
+    color: var(--text);
+    font-size: 1rem;
+  }
+
+  .evaluation-mobile-card div {
+    display: grid;
+    gap: 4px;
+  }
+
+  .evaluation-mobile-card span {
+    color: var(--brand);
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .evaluation-mobile-card p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .evaluation-table-wrap {
+    display: none;
   }
 
   .evaluation-activation-note {
@@ -10076,6 +10224,17 @@ h6 {
 
   .support-assistant-submit {
     width: 100%;
+  }
+
+  .support-assistant.marketing-page {
+    right: 10px;
+    bottom: 10px;
+  }
+
+  .support-assistant.marketing-page .support-assistant-trigger {
+    width: 52px;
+    height: 52px;
+    opacity: 0.86;
   }
 }
 

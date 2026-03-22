@@ -40,7 +40,7 @@ export function HomeVideoProof() {
 
   return (
     <section className="section-stack">
-      <div className="trade-now-showcase">
+        <div className="trade-now-showcase">
         <div className="trade-now-showcase-copy">
           <p className="eyebrow">Inside Phynic</p>
           <h2 className="section-title">
@@ -51,6 +51,46 @@ export function HomeVideoProof() {
           <p className="section-copy">
             The main terminal is laid out so execution, chart context, and account risk all stay visible on one screen.
           </p>
+        </div>
+
+        <div className="trade-now-mobile-preview">
+          <div className="trade-now-mobile-preview-top">
+            <div>
+              <strong>ES6</strong>
+              <span>E-mini S&amp;P 500</span>
+            </div>
+            <div>
+              <span>Evaluation</span>
+              <strong>$100,000.00</strong>
+            </div>
+          </div>
+          <div className="trade-now-mobile-preview-actions">
+            <button type="button" className="buy">BUY</button>
+            <button type="button" className="sell">SELL</button>
+          </div>
+          <div className="trade-now-mobile-preview-chart">
+            <div className="trade-now-mobile-preview-grid" />
+            <div className="trade-now-mobile-preview-line" />
+            <div className="trade-now-mobile-preview-price">6506.48</div>
+          </div>
+          <div className="trade-now-mobile-preview-stats">
+            <article>
+              <span>Buying power</span>
+              <strong>$100,000.00</strong>
+            </article>
+            <article>
+              <span>Equity</span>
+              <strong>$100,000.00</strong>
+            </article>
+            <article>
+              <span>Realized</span>
+              <strong>$0.00</strong>
+            </article>
+            <article>
+              <span>Unrealized</span>
+              <strong className="positive">$0.00</strong>
+            </article>
+          </div>
         </div>
 
         <div className="trade-now-shot">

@@ -65,6 +65,7 @@ export function SupportAssistant() {
   const threadRef = useRef<HTMLDivElement | null>(null);
   const pathname = typeof window === "undefined" ? "/" : window.location.pathname;
   const quickPrompts = useMemo(() => getQuickPrompts(pathname), [pathname]);
+  const marketingPage = !pathname.startsWith("/dashboard") && !pathname.startsWith("/admin");
 
   async function submitPrompt(prompt: string) {
     const content = prompt.trim();
@@ -169,7 +170,7 @@ export function SupportAssistant() {
   }, []);
 
   return (
-    <div className={`support-assistant${open ? " open" : ""}`}>
+    <div className={`support-assistant${open ? " open" : ""}${marketingPage ? " marketing-page" : ""}`}>
       {open ? (
         <section className="support-assistant-panel" aria-label="AI assistance">
           <div className="support-assistant-head">
