@@ -49,7 +49,7 @@ export default async function AdminSettingsPage() {
               <div>
                 <p className="eyebrow">Admin settings</p>
                 <h1 className="page-title">Platform controls and integrations</h1>
-                <p className="page-copy">This settings layer is where auth, payments, email, storage, and Phynic platform controls can be surfaced for operations.</p>
+                <p className="page-copy">This settings layer keeps auth, payments, email, storage, and platform controls visible for operations.</p>
               </div>
               <div className="hero-inline-metrics">
                 <article className="inline-metric">

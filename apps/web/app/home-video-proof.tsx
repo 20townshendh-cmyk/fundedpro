@@ -56,7 +56,7 @@ export function HomeVideoProof() {
         <div className="trade-now-mobile-preview">
           <div className="trade-now-mobile-preview-top">
             <div>
-              <strong>ES6</strong>
+              <strong>ES</strong>
               <span>E-mini S&amp;P 500</span>
             </div>
             <div>
@@ -97,7 +97,7 @@ export function HomeVideoProof() {
           <div className="trade-now-shot-canvas" aria-label="FundedPro Phynic screenshot style preview">
             <div className="trade-now-shot-header">
               <div className="trade-now-shot-left-title">
-                <strong>ES6</strong>
+                <strong>ES</strong>
                 <span>E-mini S&amp;P 500</span>
               </div>
               <div className="trade-now-shot-status">
@@ -121,7 +121,7 @@ export function HomeVideoProof() {
             <div className="trade-now-shot-body">
               <aside className="trade-now-shot-ladder">
                 <div className="trade-now-shot-sidecard">
-                  <strong>ES6</strong>
+                  <strong>ES</strong>
                   <span>E-mini S&amp;P 500</span>
                   <small>Max 10 ctr</small>
                 </div>

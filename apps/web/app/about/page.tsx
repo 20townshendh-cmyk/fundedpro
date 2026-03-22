@@ -41,7 +41,7 @@ export default function AboutPage() {
             </article>
             <article className="surface-card">
               <h3 className="feature-title">Operational core</h3>
-              <p className="surface-copy">Trader portal, admin workflows, challenge logic, and Phynic account infrastructure are part of the same product roadmap.</p>
+              <p className="surface-copy">Trader portal, admin workflows, challenge logic, and Phynic account infrastructure operate inside the same product system.</p>
             </article>
           </div>
         </MarketingSection>

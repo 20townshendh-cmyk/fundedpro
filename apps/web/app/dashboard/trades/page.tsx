@@ -190,7 +190,7 @@ export default async function TradeNowPage({ searchParams }: TradeNowPageProps) 
                     href={`/dashboard/trades?${accountQuery}symbol=${encodeURIComponent(item.symbol)}&tab=${encodeURIComponent(terminal.selectedTab)}&timeframe=${encodeURIComponent(timeframe)}&layout=${encodeURIComponent(layout)}`}
                     className={`trade-now-tab${item.symbol === symbol ? " active" : ""}`}
                   >
-                    {item.symbol}6
+                    {item.symbol}
                   </a>
                 ))}
               </div>
@@ -248,7 +248,7 @@ export default async function TradeNowPage({ searchParams }: TradeNowPageProps) 
               ) : null}
               <article className="trade-instrument-strip">
                 <div className="trade-strip-symbol">
-                  <strong>{symbol}6</strong>
+                  <strong>{symbol}</strong>
                   <span>{terminal.selectedInstrument?.name}</span>
                   <small>{formatWhole(maxContracts)} max contracts</small>
                 </div>

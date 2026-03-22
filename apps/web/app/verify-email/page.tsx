@@ -73,7 +73,7 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
         <section className="signup-shell signup-status-shell">
           <h1 className="signup-title">Email verified</h1>
           <p className="page-copy signup-status-copy">
-            Your email is confirmed. You can now sign in to your FundedPro account.
+            Your email is confirmed. You can now sign in to your FundedPro account, and your welcome email is on the way.
           </p>
           <a href="/login" className="ghost-button signup-status-button">Go to sign in</a>
         </section>
