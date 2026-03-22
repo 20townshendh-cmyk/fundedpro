@@ -26,7 +26,7 @@ export default async function AdminSyncPage() {
   await requireAdmin();
 
   const db = getDb();
-  const [accountResult, fleetResult] = await Promise.all([
+  const [accountResult, fleetResult, ninjaTraderTicks] = await Promise.all([
     db.query<{ login: string }>(
       'SELECT "login" FROM "TradingAccount" ORDER BY "updatedAt" DESC LIMIT 1'
     ),
@@ -35,12 +35,25 @@ export default async function AdminSyncPage() {
         COUNT(*)::text AS "accounts",
         COUNT(*) FILTER (WHERE "status" = 'SUCCESS')::text AS "success",
         COUNT(*) FILTER (WHERE "status" = 'FAILED')::text AS "failed"
-      FROM (
+        FROM (
         SELECT DISTINCT ON ("tradingAccountId") "tradingAccountId", "status"
         FROM "Mt5SyncRun"
         ORDER BY "tradingAccountId", "syncedAt" DESC
       ) latest
-    `)
+    `),
+    db.query<{ symbol: string; source: string; price: string; createdAt: Date }>(
+      `
+        SELECT DISTINCT ON (i."symbol")
+          i."symbol",
+          pt."source",
+          pt."price"::text AS "price",
+          pt."createdAt"
+        FROM "PriceTick" pt
+        JOIN "Instrument" i ON i."id" = pt."instrumentId"
+        WHERE i."symbol" IN ('ES', 'NQ')
+        ORDER BY i."symbol", pt."createdAt" DESC
+      `
+    )
   ]);
 
   const login = accountResult.rows[0]?.login;
@@ -113,6 +126,10 @@ export default async function AdminSyncPage() {
                 <article className="inline-metric">
                   <span>Fleet sync</span>
                   <strong>{`${fleetResult.rows[0]?.success ?? "0"}/${fleetResult.rows[0]?.accounts ?? "0"}`}</strong>
+                </article>
+                <article className="inline-metric">
+                  <span>Live ticks</span>
+                  <strong>{ninjaTraderTicks.rows.some((row) => row.source === "ninjatrader") ? "Connected" : "Simulated"}</strong>
                 </article>
               </div>
             </div>
@@ -231,6 +248,31 @@ export default async function AdminSyncPage() {
                     <span>Worker</span>
                     <strong>No cycles logged</strong>
                     <span>Batch sync runs triggered from admin will surface here.</span>
+                  </div>
+                )}
+              </div>
+            </article>
+            <article className="surface-card desk-card">
+              <div className="detail-head">
+                <div>
+                  <span className="muted-label">NinjaTrader ingest</span>
+                  <strong className="metric-value">ES / NQ live market feed</strong>
+                </div>
+              </div>
+              <div className="session-table">
+                {ninjaTraderTicks.rows.length ? (
+                  ninjaTraderTicks.rows.map((tick) => (
+                    <div className="session-row" key={tick.symbol}>
+                      <span>{tick.symbol}</span>
+                      <strong>{tick.source === "ninjatrader" ? "Live tick" : "Simulated tick"}</strong>
+                      <span>{tick.price} | {new Date(tick.createdAt).toLocaleString("en-GB")}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="session-row">
+                    <span>Feed</span>
+                    <strong>No ticks yet</strong>
+                    <span>Configure the NinjaTrader ingest token and push live ES/NQ ticks into the market-data endpoint.</span>
                   </div>
                 )}
               </div>

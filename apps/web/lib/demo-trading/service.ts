@@ -10,6 +10,8 @@ type TerminalSearch = {
   tab?: string;
 };
 
+const LIVE_INGEST_FRESHNESS_MS = 3_000;
+
 async function resolveRequestedDemoAccountId(userId: string, accountId?: string) {
   if (!accountId) {
     return null;
@@ -224,12 +226,14 @@ export async function getDemoTradingTerminal(userId: string, search?: TerminalSe
         instrumentId: string;
         symbol: string;
         name: string;
-      assetClass: string;
-      tickSize: string;
-      tickValue: string;
-      price: string | null;
-      changeAmount: string | null;
-      changePct: string | null;
+        assetClass: string;
+        tickSize: string;
+        tickValue: string;
+        price: string | null;
+        changeAmount: string | null;
+        changePct: string | null;
+        latestSource: string | null;
+        latestTickAt: Date | null;
       }>(
         `
           SELECT
@@ -241,11 +245,13 @@ export async function getDemoTradingTerminal(userId: string, search?: TerminalSe
             i."tickValue"::text,
             pt."price"::text,
             pt."changeAmount"::text,
-            pt."changePct"::text
+            pt."changePct"::text,
+            pt."source" AS "latestSource",
+            pt."createdAt" AS "latestTickAt"
           FROM "WatchlistItem" wi
           JOIN "Instrument" i ON i."id" = wi."instrumentId"
           LEFT JOIN LATERAL (
-            SELECT "price", "changeAmount", "changePct"
+            SELECT "price", "changeAmount", "changePct", "source", "createdAt"
             FROM "PriceTick"
             WHERE "instrumentId" = i."id"
             ORDER BY "createdAt" DESC
@@ -266,7 +272,11 @@ export async function getDemoTradingTerminal(userId: string, search?: TerminalSe
   const watchlistItems = watchlistItemsResult.rows;
   const selectedInstrumentWithDelayed = selectedInstrument;
   const executionInstrument = selectedInstrument;
-  const marketDataSource: "DELAYED_EXTERNAL" | "SIMULATED" = "SIMULATED";
+  const hasFreshLiveIngest =
+    selectedInstrumentWithDelayed?.latestSource === "ninjatrader" &&
+    selectedInstrumentWithDelayed.latestTickAt != null &&
+    Date.now() - selectedInstrumentWithDelayed.latestTickAt.getTime() <= LIVE_INGEST_FRESHNESS_MS;
+  const marketDataSource: "LIVE_EXTERNAL" | "SIMULATED" = hasFreshLiveIngest ? "LIVE_EXTERNAL" : "SIMULATED";
 
   const [chartTicksResult, positionsResult, ordersResult, fillsResult, historyResult] = selectedInstrumentWithDelayed && activeAccount
     ? await Promise.all([

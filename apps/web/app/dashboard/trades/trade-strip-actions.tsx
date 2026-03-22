@@ -9,7 +9,7 @@ type TradeStripActionsProps = {
   demoAccountId: string;
   instrumentId: string;
   symbol: string;
-  marketDataSource: "DELAYED_EXTERNAL" | "SIMULATED";
+  marketDataSource: "LIVE_EXTERNAL" | "SIMULATED";
   tab: string;
   maxContracts: number;
   timeframe: string;
@@ -81,10 +81,10 @@ export function TradeStripActions({
           disabled={Boolean(tradingLockedReason)}
         />
         <small>Max {maxAllowed.toLocaleString("en-US")}</small>
-        <small className={marketDataSource === "DELAYED_EXTERNAL" ? "negative" : ""}>
-          {marketDataSource === "DELAYED_EXTERNAL"
-            ? "Charts can be delayed for some instruments. Orders still submit against the current Trade Now execution price."
-            : "Orders submit against the current Trade Now execution price feed."}
+        <small className={marketDataSource === "LIVE_EXTERNAL" ? "positive" : ""}>
+          {marketDataSource === "LIVE_EXTERNAL"
+            ? "Live external ticks are active for this symbol."
+            : "Orders submit against the current Trade Now simulated live feed."}
         </small>
       </div>
       <div className="trade-strip-presets">

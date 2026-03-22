@@ -206,7 +206,7 @@ export default async function TradeNowPage({ searchParams }: TradeNowPageProps) 
             <aside className="trade-ladder-panel">
               <div className="trade-ladder-head">
                 <div>
-                  <strong>{symbol}6</strong>
+                  <strong>{symbol}</strong>
                   <span>{terminal.selectedInstrument?.name ?? "Instrument"}</span>
                 </div>
                 <div className="trade-ladder-account">
