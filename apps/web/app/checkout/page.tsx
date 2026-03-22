@@ -7,6 +7,45 @@ import { CheckoutSubmitCard } from "./checkout-submit-card";
 
 const FALLBACK_CHECKOUT_PLANS = [
   {
+    slug: "starter-50k",
+    name: "Starter",
+    challengeType: "ONE_STEP",
+    accountSize: 50000,
+    priceCents: 20000,
+    phaseCount: 1,
+    minTradingDays: 3,
+    payoutSplitPct: "85.00",
+    profitTargetPct: "6.00",
+    dailyDrawdownPct: "2.00",
+    maxDrawdownPct: "5.00"
+  },
+  {
+    slug: "pro-100k",
+    name: "Pro",
+    challengeType: "ONE_STEP",
+    accountSize: 100000,
+    priceCents: 30000,
+    phaseCount: 1,
+    minTradingDays: 3,
+    payoutSplitPct: "85.00",
+    profitTargetPct: "6.00",
+    dailyDrawdownPct: "2.00",
+    maxDrawdownPct: "5.00"
+  },
+  {
+    slug: "elite-150k",
+    name: "Elite",
+    challengeType: "ONE_STEP",
+    accountSize: 150000,
+    priceCents: 40000,
+    phaseCount: 1,
+    minTradingDays: 3,
+    payoutSplitPct: "85.00",
+    profitTargetPct: "6.00",
+    dailyDrawdownPct: "2.00",
+    maxDrawdownPct: "5.00"
+  },
+  {
     slug: "apex-600k",
     name: "Apex",
     challengeType: "ONE_STEP",
