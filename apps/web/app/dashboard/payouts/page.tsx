@@ -4,6 +4,7 @@ import { getChallengeSnapshot, getPayoutHoldAssessment } from "@fundedpro/domain
 import { Footer, SiteShell, TopNav } from "@fundedpro/ui";
 import { getSession, logoutAction } from "../../../lib/auth";
 import { syncUserTradingAccountsFromDemo } from "../../../lib/internal-trading-sync";
+import { ensureOwnerShowcaseWorkspace } from "../../../lib/owner-showcase";
 import { RequestRewardDialog } from "./request-reward-dialog";
 import { showcaseWorkspace } from "../../../lib/showcase-workspace";
 
@@ -102,6 +103,8 @@ export default async function PayoutsPage() {
   if (!session) {
     redirect("/login");
   }
+
+  await ensureOwnerShowcaseWorkspace(session.userId, session.email);
 
   const db = getDb();
   await syncUserTradingAccountsFromDemo(session.userId);

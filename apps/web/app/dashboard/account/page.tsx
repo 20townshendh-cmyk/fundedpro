@@ -5,6 +5,7 @@ import { Footer, SiteShell, TopNav } from "@fundedpro/ui";
 import { FlashToast } from "../../components/flash-toast";
 import { getSession, logoutAction } from "../../../lib/auth";
 import { getInternalTradingSnapshot, syncUserTradingAccountsFromDemo } from "../../../lib/internal-trading-sync";
+import { ensureOwnerShowcaseWorkspace } from "../../../lib/owner-showcase";
 import { decryptTradingPassword } from "../../../lib/trading-credentials";
 import { showcaseWorkspace } from "../../../lib/showcase-workspace";
 
@@ -318,6 +319,8 @@ export default async function AccountDetailPage({ searchParams }: AccountPagePro
   if (!session) {
     redirect("/login");
   }
+
+  await ensureOwnerShowcaseWorkspace(session.userId, session.email);
 
   const { accountId, provisioned } = await searchParams;
   const db = getDb();

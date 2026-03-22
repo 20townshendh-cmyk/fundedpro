@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getDb } from "@fundedpro/db";
 import { Footer, SiteShell, TopNav } from "@fundedpro/ui";
 import { getSession, logoutAction } from "../../../lib/auth";
+import { ensureOwnerShowcaseWorkspace } from "../../../lib/owner-showcase";
 import { startChallengeCheckoutAction } from "../../../lib/trader";
 import { showcaseWorkspace } from "../../../lib/showcase-workspace";
 
@@ -148,6 +149,8 @@ export default async function BillingPage() {
   if (!session) {
     redirect("/login");
   }
+
+  await ensureOwnerShowcaseWorkspace(session.userId, session.email);
 
   const db = getDb();
   const [invoices, accountSummary, orderHistory] = await Promise.all([

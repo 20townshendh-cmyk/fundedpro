@@ -4,6 +4,7 @@ import { getChallengeSnapshot } from "@fundedpro/domain";
 import { Footer, SiteShell, TopNav } from "@fundedpro/ui";
 import { getSession, logoutAction } from "../../lib/auth";
 import { getInternalTradingSnapshot, syncUserTradingAccountsFromDemo } from "../../lib/internal-trading-sync";
+import { ensureOwnerShowcaseWorkspace } from "../../lib/owner-showcase";
 
 export const dynamic = "force-dynamic";
 
@@ -483,6 +484,8 @@ export default async function DashboardPage() {
   if (!session) {
     redirect("/login");
   }
+
+  await ensureOwnerShowcaseWorkspace(session.userId, session.email);
 
   const db = getDb();
   let userResult;

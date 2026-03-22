@@ -13,6 +13,7 @@ import { getMaxContractsForBalance } from "../../../lib/demo-trading/contracts";
 import type { ChartTimeframe } from "../../../lib/demo-trading/delayed-feed";
 import { getDemoTradingTerminal } from "../../../lib/demo-trading/service";
 import { getChartFeed } from "../../../lib/market-data";
+import { ensureOwnerShowcaseWorkspace } from "../../../lib/owner-showcase";
 import { decryptTradingPassword } from "../../../lib/trading-credentials";
 import { FlashToast, type ToastItem } from "../../components/flash-toast";
 import { LiveChart } from "./live-chart";
@@ -460,6 +461,8 @@ function renderShowcaseTradeWorkspace(session: Awaited<ReturnType<typeof getSess
 export default async function TradeNowPage({ searchParams }: TradeNowPageProps) {
   const session = await getSession();
   if (!session) redirect("/login?next=%2Fdashboard%2Ftrades");
+
+  await ensureOwnerShowcaseWorkspace(session.userId, session.email);
 
   const filters = await searchParams;
   const cookieStore = await cookies();
