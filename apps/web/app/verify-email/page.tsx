@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { SiteShell } from "@fundedpro/ui";
 import { getDb } from "@fundedpro/db";
+import { sendWelcomeEmail } from "../../lib/email/service";
 
 const EMAIL_VERIFICATION_WINDOW_MINUTES = 10;
 
@@ -16,9 +17,9 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
   }
 
   const db = getDb();
-  const tokenResult = await db.query<{ id: string; emailVerificationSentAt: string | null }>(
+  const tokenResult = await db.query<{ id: string; fullName: string; email: string; emailVerificationSentAt: string | null }>(
     `
-      SELECT "id", "emailVerificationSentAt"
+      SELECT "id", "fullName", "email", "emailVerificationSentAt"
       FROM "User"
       WHERE "emailVerificationToken" = $1
       LIMIT 1;
@@ -55,6 +56,15 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
 
   if (!result.rowCount) {
     redirect("/login?error=invalid-verification");
+  }
+
+  try {
+    await sendWelcomeEmail({
+      to: tokenRow.email,
+      fullName: tokenRow.fullName
+    });
+  } catch (error) {
+    console.error("welcome-email-failed", { userId: tokenRow.id, error });
   }
 
   return (

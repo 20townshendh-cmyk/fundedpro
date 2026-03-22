@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import type { Role } from "@fundedpro/db";
 import { getDb } from "@fundedpro/db";
 import { setSession } from "../../../../../lib/auth";
+import { sendWelcomeEmail } from "../../../../../lib/email/service";
 import { verifyGoogleCallback } from "../../../../../lib/google-auth";
 
 export async function GET(request: NextRequest) {
@@ -21,6 +22,7 @@ export async function GET(request: NextRequest) {
   }
 
   const db = getDb();
+  let createdNewUser = false;
   let result = await db.query<{ id: string; email: string; role: Role }>(
     `
       SELECT "id", "email", "role"
@@ -48,6 +50,7 @@ export async function GET(request: NextRequest) {
     );
 
     user = result.rows[0];
+    createdNewUser = true;
   } else {
     await db.query(
       `
@@ -65,6 +68,21 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/signup?error=google-failed", request.url));
   }
 
-  await setSession(user);
+  const sessionUser = user;
+
+  if (createdNewUser) {
+    const welcomeName = googleUser.fullName || googleUser.email.split("@")[0] || "Trader";
+
+    try {
+      await sendWelcomeEmail({
+        to: googleUser.email,
+        fullName: welcomeName
+      });
+    } catch (error) {
+      console.error("google-welcome-email-failed", { email: googleUser.email, error });
+    }
+  }
+
+  await setSession(sessionUser);
   return NextResponse.redirect(new URL("/dashboard", request.url));
 }

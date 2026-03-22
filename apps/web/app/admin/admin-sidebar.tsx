@@ -3,6 +3,7 @@ import { logoutAction } from "../../lib/auth";
 type AdminSection =
   | "overview"
   | "billing"
+  | "email"
   | "users"
   | "accounts"
   | "challenges"
@@ -22,6 +23,7 @@ type AdminSidebarProps = {
 const adminLinks: Array<{ id: AdminSection; href: string; label: string }> = [
   { id: "overview", href: "/admin", label: "Overview" },
   { id: "billing", href: "/admin/billing", label: "Billing" },
+  { id: "email", href: "/admin/email", label: "Email" },
   { id: "users", href: "/admin/users", label: "Users" },
   { id: "accounts", href: "/admin/accounts", label: "Accounts" },
   { id: "challenges", href: "/admin/challenges", label: "Challenges" },
