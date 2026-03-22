@@ -5,6 +5,11 @@ type CheckEmailPageProps = {
   searchParams: Promise<{ email?: string; resent?: string; error?: string }>;
 };
 
+const checkEmailMessages: Record<string, string> = {
+  "invalid-email": "Enter a valid email address to resend verification.",
+  "email-send-failed": "We could not send the verification email right now. Check the sender configuration and try again."
+};
+
 export default async function CheckEmailPage({ searchParams }: CheckEmailPageProps) {
   const { email, resent, error } = await searchParams;
 
@@ -14,7 +19,7 @@ export default async function CheckEmailPage({ searchParams }: CheckEmailPagePro
         <section className="signup-shell signup-status-shell">
           <h1 className="signup-title">Check your email</h1>
           {resent ? <p className="signup-success">A fresh verification email is on the way.</p> : null}
-          {error ? <p className="signup-error">Enter a valid email address to resend verification.</p> : null}
+          {error ? <p className="signup-error">{checkEmailMessages[error] ?? "We could not send your verification email."}</p> : null}
           <p className="page-copy signup-status-copy">
             We sent you a verification email. Open the link inside it to confirm it was you before signing in.
           </p>

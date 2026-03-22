@@ -300,6 +300,8 @@ export async function signupAction(formData: FormData) {
     });
   } catch (error) {
     console.error("verification-email-failed", error);
+    await ensureDemoTradingWorkspaceForUser(createdUser.id);
+    redirect(`/signup/check-email?email=${encodeURIComponent(createdUser.email)}&error=email-send-failed`);
   }
 
   await ensureDemoTradingWorkspaceForUser(createdUser.id);
@@ -348,6 +350,7 @@ export async function resendVerificationEmailAction(formData: FormData) {
       });
     } catch (error) {
       console.error("verification-email-resend-failed", error);
+      redirect(`/signup/check-email?email=${encodeURIComponent(email)}&error=email-send-failed`);
     }
   }
 
@@ -466,6 +469,7 @@ export async function forgotPasswordAction(formData: FormData) {
       });
     } catch (error) {
       console.error("password-reset-email-failed", error);
+      redirect("/forgot-password?error=email-send-failed");
     }
   }
 

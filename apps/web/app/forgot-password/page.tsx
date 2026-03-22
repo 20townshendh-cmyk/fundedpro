@@ -4,7 +4,8 @@ import { forgotPasswordAction } from "../../lib/auth";
 const forgotPasswordMessages: Record<string, string> = {
   "invalid-email": "Enter a valid email address.",
   "invalid-reset": "That reset link is invalid.",
-  "expired-reset": "That reset link has expired. Request a new one."
+  "expired-reset": "That reset link has expired. Request a new one.",
+  "email-send-failed": "We could not send the password reset email right now. Check the sender configuration and try again."
 };
 
 type ForgotPasswordPageProps = {
