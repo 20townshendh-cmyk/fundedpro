@@ -12413,3 +12413,252 @@ h6 {
     border-radius: 12px !important;
   }
 }
+
+/* Final mobile sizing audit: keep the whole app inside the viewport cleanly */
+@media (max-width: 768px) {
+  :root {
+    --page-gutter: 14px;
+  }
+
+  html,
+  body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden !important;
+  }
+
+  body * {
+    min-width: 0;
+  }
+
+  .site-shell,
+  .site-shell:has(.dashboard-shell),
+  .site-shell:has(.trade-fullscreen-shell),
+  .site-shell:has(.checkout-layout) {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding-left: var(--page-gutter) !important;
+    padding-right: var(--page-gutter) !important;
+  }
+
+  .dashboard-shell,
+  .dashboard-main,
+  .overview-grid,
+  .dashboard-grid,
+  .spotlight-grid,
+  .hero-inline-metrics,
+  .trader-summary-grid,
+  .payouts-simple-grid,
+  .pricing-grid,
+  .feature-grid,
+  .metric-grid,
+  .faq-list,
+  .stats-grid,
+  .checkout-layout,
+  .checkout-section,
+  .checkout-summary,
+  .account-browser,
+  .account-browser-list,
+  .account-browser-detail,
+  .account-browser-cards,
+  .trade-now-page,
+  .trade-main-panel,
+  .trade-control-panel,
+  .trade-ladder-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .dashboard-sidebar,
+  .dashboard-main,
+  .dashboard-hero,
+  .surface-card,
+  .table-card,
+  .checkout-section,
+  .checkout-summary,
+  .account-browser-list,
+  .account-browser-detail,
+  .trade-ladder-panel,
+  .trade-main-panel,
+  .trade-control-panel,
+  .trade-market-panel,
+  .trade-blotter-panel {
+    box-sizing: border-box !important;
+  }
+
+  .page-title,
+  .hero-title,
+  .hero-title-wide,
+  .section-title,
+  .spotlight-value,
+  .metric-value,
+  .price-value {
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+  }
+
+  .page-copy,
+  .section-copy,
+  .surface-copy,
+  .footer-copy,
+  .spotlight-copy,
+  .muted-label,
+  .trade-panel-title span {
+    overflow-wrap: anywhere !important;
+  }
+
+  .top-nav,
+  .top-nav-shell,
+  .top-nav-panel,
+  .dashboard-sidebar,
+  .sidebar-nav,
+  .sidebar-link,
+  .sidebar-logout-desktop,
+  .trade-now-topbar,
+  .trade-instrument-strip,
+  .trade-strip-actions,
+  .trade-strip-metrics,
+  .trade-order-strip,
+  .trade-order-strip-form,
+  .trade-chart-live-head,
+  .trade-chart-live-meta,
+  .trade-chart-timeframes,
+  .trade-tabs.compact,
+  .hero-button-row,
+  .button-row,
+  .action-row,
+  .overview-actions,
+  .account-detail-top-actions,
+  .account-browser-card-actions {
+    max-width: 100% !important;
+  }
+
+  .sidebar-link,
+  .nav-links a,
+  .nav-action-link,
+  .button-primary,
+  .button-secondary,
+  .ghost-button,
+  .account-browser-buy,
+  .overview-action,
+  .trade-action-button,
+  .trade-strip-accounts-button {
+    min-height: 44px !important;
+  }
+
+  .hero-trust-strip,
+  .hero-metrics-band,
+  .inline-metric,
+  .metric-panel,
+  .spotlight-card,
+  .surface-card,
+  .table-card,
+  .pricing-card,
+  .cta-panel,
+  .footer-panel,
+  .account-browser-card,
+  .trade-strip-metrics > div,
+  .trade-now-status > *,
+  .trade-strip-qty {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  img,
+  svg,
+  canvas,
+  video,
+  iframe {
+    display: block;
+    max-width: 100% !important;
+  }
+
+  .trade-chart-canvas,
+  .trade-chart-frame,
+  .trade-chart-live,
+  .trade-now-shell,
+  .trade-lower-grid,
+  .trade-market-table,
+  .trade-table.terminal,
+  .positions-table,
+  .table-wrap {
+    max-width: 100% !important;
+  }
+
+  .trade-market-table,
+  .trade-table.terminal,
+  .positions-table,
+  .table-wrap,
+  .account-browser-cards,
+  .sidebar-nav,
+  .trade-chart-live-meta,
+  .trade-chart-timeframes,
+  .trade-tabs.compact {
+    scrollbar-width: none;
+  }
+
+  .trade-market-table::-webkit-scrollbar,
+  .trade-table.terminal::-webkit-scrollbar,
+  .positions-table::-webkit-scrollbar,
+  .table-wrap::-webkit-scrollbar,
+  .account-browser-cards::-webkit-scrollbar,
+  .sidebar-nav::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --page-gutter: 12px;
+  }
+
+  .site-shell,
+  .site-shell:has(.dashboard-shell),
+  .site-shell:has(.trade-fullscreen-shell),
+  .site-shell:has(.checkout-layout) {
+    padding-left: var(--page-gutter) !important;
+    padding-right: var(--page-gutter) !important;
+  }
+
+  .dashboard-sidebar,
+  .dashboard-main,
+  .dashboard-hero,
+  .surface-card,
+  .table-card,
+  .checkout-section,
+  .checkout-summary,
+  .account-browser-list,
+  .account-browser-detail,
+  .trade-ladder-panel,
+  .trade-main-panel,
+  .trade-control-panel,
+  .trade-market-panel,
+  .trade-blotter-panel {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    border-radius: 16px !important;
+  }
+
+  .page-title,
+  .hero-title,
+  .hero-title-wide {
+    font-size: clamp(1.8rem, 10vw, 2.5rem) !important;
+  }
+
+  .section-title,
+  .spotlight-value,
+  .metric-value,
+  .price-value {
+    font-size: clamp(1.4rem, 8vw, 2rem) !important;
+  }
+
+  .hero-copy,
+  .page-copy,
+  .section-copy,
+  .surface-copy,
+  .footer-copy {
+    font-size: 0.92rem !important;
+    line-height: 1.55 !important;
+  }
+}
