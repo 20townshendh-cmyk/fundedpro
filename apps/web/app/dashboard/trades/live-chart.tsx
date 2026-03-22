@@ -178,6 +178,32 @@ export function LiveChart({ symbol, initialCandles, lastPrice, change, linkedSym
     let cancelled = false;
     let inFlight = false;
     let timeoutId: number | null = null;
+    let eventSource: EventSource | null = null;
+
+    function applyIncomingData(data: {
+      candles: DemoCandle[];
+      lastPrice: number;
+      source: "INTERNAL" | "DELAYED_EXTERNAL" | "EMPTY";
+      tickSource: "ninjatrader" | "simulated" | null;
+      lastTickAt: string | null;
+    }) {
+      if (cancelled || !seriesRef.current) {
+        return;
+      }
+
+      seriesRef.current.setData(toCandleData(data.candles));
+      setCurrentChange(data.lastPrice - currentPriceRef.current);
+      currentPriceRef.current = data.lastPrice;
+      setCurrentPrice(data.lastPrice);
+      setLastTickAt(data.lastTickAt);
+      setFeedBadge(
+        data.source === "DELAYED_EXTERNAL"
+          ? "delayed"
+          : data.tickSource === "ninjatrader"
+            ? "live"
+            : "simulated"
+      );
+    }
 
     async function refresh() {
       if (cancelled || inFlight) {
@@ -202,22 +228,7 @@ export function LiveChart({ symbol, initialCandles, lastPrice, change, linkedSym
           lastTickAt: string | null;
         };
 
-        if (cancelled || !seriesRef.current) {
-          return;
-        }
-
-        seriesRef.current.setData(toCandleData(data.candles));
-        setCurrentChange(data.lastPrice - currentPriceRef.current);
-        currentPriceRef.current = data.lastPrice;
-        setCurrentPrice(data.lastPrice);
-        setLastTickAt(data.lastTickAt);
-        setFeedBadge(
-          data.source === "DELAYED_EXTERNAL"
-            ? "delayed"
-            : data.tickSource === "ninjatrader"
-              ? "live"
-              : "simulated"
-        );
+        applyIncomingData(data);
       } finally {
         inFlight = false;
         if (!cancelled) {
@@ -232,10 +243,32 @@ export function LiveChart({ symbol, initialCandles, lastPrice, change, linkedSym
       }
     }
 
-    void refresh();
+    try {
+      eventSource = new EventSource(`/api/demo-trading/chart/stream?symbol=${encodeURIComponent(activeSymbol)}&timeframe=${encodeURIComponent(timeframe)}`);
+      setIsLoading(true);
+      eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data) as {
+          candles: DemoCandle[];
+          lastPrice: number;
+          source: "INTERNAL" | "DELAYED_EXTERNAL" | "EMPTY";
+          tickSource: "ninjatrader" | "simulated" | null;
+          lastTickAt: string | null;
+        };
+        applyIncomingData(data);
+        setIsLoading(false);
+      };
+      eventSource.onerror = () => {
+        eventSource?.close();
+        eventSource = null;
+        void refresh();
+      };
+    } catch {
+      void refresh();
+    }
 
     return () => {
       cancelled = true;
+      eventSource?.close();
       if (timeoutId !== null) {
         window.clearTimeout(timeoutId);
       }
