@@ -2,9 +2,10 @@ import { redirect } from "next/navigation";
 import { getDb } from "@fundedpro/db";
 import { getChallengeSnapshot } from "@fundedpro/domain";
 import { Footer, SiteShell, TopNav } from "@fundedpro/ui";
-import { getSession, logoutAction } from "../../lib/auth";
+import { getSession } from "../../lib/auth";
 import { getInternalTradingSnapshot, syncUserTradingAccountsFromDemo } from "../../lib/internal-trading-sync";
 import { ensureOwnerShowcaseWorkspace } from "../../lib/owner-showcase";
+import { DashboardSidebar } from "./dashboard-sidebar";
 
 export const dynamic = "force-dynamic";
 
@@ -274,28 +275,11 @@ function renderOfflineDemoDashboard(session: Awaited<ReturnType<typeof getSessio
     <SiteShell>
       <TopNav />
       <main className="dashboard-shell">
-        <aside className="dashboard-sidebar">
-          <div className="sidebar-brand">
-            <p className="eyebrow">Trader workspace</p>
-            <h2 className="sidebar-title">FundedPro</h2>
-            <p className="surface-copy">Showcase workspace. This account does not have a live challenge provisioned yet, so you are seeing the same premium demo-style trader layout used for previews.</p>
-          </div>
-          <nav className="sidebar-nav">
-            <a className="sidebar-link sidebar-link-gold" href="/checkout">New Challenge</a>
-            <a className="sidebar-link" href="/dashboard/trades">Trade Now</a>
-            <a className="sidebar-link active" href="/dashboard">Overview</a>
-            <a className="sidebar-link" href="/dashboard/account">Account detail</a>
-            <a className="sidebar-link" href="/dashboard/trades?tab=history">Trade history</a>
-            <a className="sidebar-link" href="/dashboard/billing">Billing</a>
-            <a className="sidebar-link" href="/dashboard/payouts">Payouts</a>
-            <a className="sidebar-link" href="/dashboard/support">Support</a>
-            <a className="sidebar-link" href="/login">Switch account</a>
-            {session?.role === "ADMIN" ? <a className="sidebar-link" href="/admin">Admin panel</a> : null}
-          </nav>
-          <form action={logoutAction}>
-            <button className="ghost-button" type="submit">Log out</button>
-          </form>
-        </aside>
+        <DashboardSidebar
+          active="overview"
+          isAdmin={session?.role === "ADMIN"}
+          description="Showcase workspace. This account does not have a live challenge provisioned yet, so you are seeing the same premium demo-style trader layout used for previews."
+        />
 
         <section className="dashboard-main overview-page">
           <section className="overview-topbar">
@@ -646,28 +630,11 @@ export default async function DashboardPage() {
     <SiteShell>
       <TopNav />
       <main className="dashboard-shell">
-        <aside className="dashboard-sidebar">
-          <div className="sidebar-brand">
-            <p className="eyebrow">Trader workspace</p>
-            <h2 className="sidebar-title">FundedPro</h2>
-            <p className="surface-copy">Premium visibility across challenge status, balances, drawdown limits, and progression.</p>
-          </div>
-          <nav className="sidebar-nav">
-            <a className="sidebar-link sidebar-link-gold" href="/checkout">New Challenge</a>
-            <a className="sidebar-link" href="/dashboard/trades">Trade Now</a>
-            <a className="sidebar-link active" href="/dashboard">Overview</a>
-            <a className="sidebar-link" href="/dashboard/account">Account detail</a>
-            <a className="sidebar-link" href="/dashboard/trades?tab=history">Trade history</a>
-            <a className="sidebar-link" href="/dashboard/billing">Billing</a>
-            <a className="sidebar-link" href="/dashboard/payouts">Payouts</a>
-            <a className="sidebar-link" href="/dashboard/support">Support</a>
-            <a className="sidebar-link" href="/login">Switch account</a>
-            {session.role === "ADMIN" ? <a className="sidebar-link" href="/admin">Admin panel</a> : null}
-          </nav>
-          <form action={logoutAction}>
-            <button className="ghost-button" type="submit">Log out</button>
-          </form>
-        </aside>
+        <DashboardSidebar
+          active="overview"
+          isAdmin={session.role === "ADMIN"}
+          description="Premium visibility across challenge status, balances, drawdown limits, and progression."
+        />
 
         <section className="dashboard-main overview-page">
           <section className="overview-topbar">
