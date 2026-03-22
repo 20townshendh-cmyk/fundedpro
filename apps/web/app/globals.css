@@ -3452,6 +3452,7 @@ h6 {
 .evaluation-comparison {
   display: grid;
   gap: 28px;
+  overflow: hidden;
 }
 
 .evaluation-copy {
@@ -3471,6 +3472,7 @@ h6 {
   margin: 0 auto;
   padding: 28px;
   border-radius: 32px;
+  overflow: hidden;
   border: 1px solid var(--line);
   background:
     radial-gradient(circle at top right, rgba(92, 242, 168, 0.12), transparent 30%),
@@ -3797,6 +3799,18 @@ h6 {
     border-radius: 18px;
   }
 
+  .evaluation-pill.compact strong,
+  .evaluation-pill.compact span {
+    min-width: 0;
+  }
+
+  .evaluation-pill-price-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
   .evaluation-pill-price-group,
   .evaluation-pill-savings {
     line-height: 1.2;
@@ -3859,6 +3873,29 @@ h6 {
     padding: 16px 18px;
     border-radius: 20px;
     font-size: 0.94rem;
+  }
+}
+
+@media (max-width: 460px) {
+  .evaluation-board {
+    padding: 16px;
+    border-radius: 22px;
+  }
+
+  .evaluation-pill-row.compact {
+    grid-template-columns: 1fr;
+  }
+
+  .evaluation-pill.compact {
+    padding: 14px;
+  }
+
+  .evaluation-pill strong {
+    font-size: 1rem;
+  }
+
+  .evaluation-limit-note {
+    font-size: 0.88rem;
   }
 }
 
