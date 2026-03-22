@@ -12606,6 +12606,108 @@ h6 {
   .sidebar-nav::-webkit-scrollbar {
     display: none;
   }
+
+  .page-title,
+  .hero-title,
+  .hero-title-wide {
+    font-size: clamp(1.95rem, 8.8vw, 2.9rem) !important;
+    line-height: 1.02 !important;
+    letter-spacing: -0.04em !important;
+  }
+
+  .section-title,
+  .spotlight-value,
+  .metric-value,
+  .price-value,
+  .overview-hello {
+    font-size: clamp(1.45rem, 6.9vw, 2.15rem) !important;
+    line-height: 1.06 !important;
+    letter-spacing: -0.035em !important;
+  }
+
+  .hero-copy,
+  .page-copy,
+  .section-copy,
+  .surface-copy,
+  .footer-copy,
+  .spotlight-copy {
+    font-size: 0.95rem !important;
+    line-height: 1.6 !important;
+  }
+
+  .muted-label,
+  .eyebrow,
+  .status-pill,
+  .hero-kicker,
+  .trade-panel-title span,
+  .trade-strip-symbol small,
+  .account-browser-filter,
+  .trade-now-status span,
+  .trade-strip-metrics span,
+  .inline-metric span {
+    font-size: 0.68rem !important;
+    line-height: 1.35 !important;
+    letter-spacing: 0.06em !important;
+  }
+
+  .sidebar-link,
+  .nav-links a,
+  .nav-action-link,
+  .button-primary,
+  .button-secondary,
+  .ghost-button,
+  .overview-action,
+  .trade-strip-accounts-button {
+    font-size: 0.92rem !important;
+    line-height: 1.2 !important;
+  }
+
+  .inline-metric strong,
+  .trade-strip-metrics strong,
+  .trade-now-status strong,
+  .trade-panel-title strong,
+  .trade-strip-symbol span,
+  .trade-strip-symbol strong,
+  .overview-allocation {
+    line-height: 1.12 !important;
+  }
+
+  .inline-metric strong,
+  .trade-strip-metrics strong,
+  .trade-now-status strong,
+  .overview-allocation {
+    font-size: 0.98rem !important;
+  }
+
+  .feature-title {
+    font-size: 1.02rem !important;
+    line-height: 1.28 !important;
+  }
+
+  .trade-table-row,
+  .trade-table-row-activity,
+  .trade-market-row,
+  .trade-table-head,
+  .trade-market-head,
+  .payouts-table-head {
+    font-size: 0.82rem !important;
+    line-height: 1.35 !important;
+  }
+
+  .trade-market-row span,
+  .trade-table-row span,
+  .trade-table-row strong,
+  .trade-table-row-activity span,
+  .trade-table-row-activity strong {
+    font-size: 0.82rem !important;
+    line-height: 1.35 !important;
+  }
+
+  .hero-trust-strip,
+  .home-hero-mobile-trust {
+    font-size: 0.92rem !important;
+    line-height: 1.45 !important;
+  }
 }
 
 @media (max-width: 480px) {
@@ -12660,6 +12762,66 @@ h6 {
   .footer-copy {
     font-size: 0.92rem !important;
     line-height: 1.55 !important;
+  }
+
+  .page-title,
+  .hero-title,
+  .hero-title-wide {
+    font-size: clamp(1.72rem, 10vw, 2.35rem) !important;
+  }
+
+  .section-title,
+  .spotlight-value,
+  .metric-value,
+  .price-value,
+  .overview-hello {
+    font-size: clamp(1.28rem, 7.6vw, 1.8rem) !important;
+  }
+
+  .sidebar-link,
+  .nav-links a,
+  .nav-action-link,
+  .button-primary,
+  .button-secondary,
+  .ghost-button,
+  .overview-action,
+  .trade-strip-accounts-button {
+    font-size: 0.88rem !important;
+  }
+
+  .muted-label,
+  .eyebrow,
+  .status-pill,
+  .hero-kicker,
+  .trade-panel-title span,
+  .trade-strip-symbol small,
+  .account-browser-filter,
+  .trade-now-status span,
+  .trade-strip-metrics span,
+  .inline-metric span {
+    font-size: 0.64rem !important;
+  }
+
+  .inline-metric strong,
+  .trade-strip-metrics strong,
+  .trade-now-status strong,
+  .overview-allocation {
+    font-size: 0.92rem !important;
+  }
+
+  .feature-title {
+    font-size: 0.98rem !important;
+  }
+
+  .trade-table-row,
+  .trade-table-row-activity,
+  .trade-market-row,
+  .trade-market-row span,
+  .trade-table-row span,
+  .trade-table-row strong,
+  .trade-table-row-activity span,
+  .trade-table-row-activity strong {
+    font-size: 0.78rem !important;
   }
 }
 
