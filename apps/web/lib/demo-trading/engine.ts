@@ -8,6 +8,7 @@ import { getMaxContractsForBalance } from "./contracts";
 import { assertDemoInstrumentMarketOpen } from "./market-hours";
 
 const MARGIN_RATE = 0.1;
+const LIVE_INGEST_FRESHNESS_MS = 3_000;
 
 type LatestInstrumentRow = {
   instrumentId: string;
@@ -17,6 +18,7 @@ type LatestInstrumentRow = {
   defaultPrice: string;
   latestPrice: string | null;
   latestCreatedAt: Date | null;
+  latestSource: string | null;
 };
 
 type OrderRow = {
@@ -411,10 +413,11 @@ async function getLatestInstrumentMap(client: PoolClient) {
         i."tickValue"::text,
         i."defaultPrice"::text,
         pt."price"::text AS "latestPrice",
-        pt."createdAt" AS "latestCreatedAt"
+        pt."createdAt" AS "latestCreatedAt",
+        pt."source" AS "latestSource"
       FROM "Instrument" i
       LEFT JOIN LATERAL (
-        SELECT "price", "createdAt"
+        SELECT "price", "createdAt", "source"
         FROM "PriceTick"
         WHERE "instrumentId" = i."id"
         ORDER BY "createdAt" DESC
@@ -452,10 +455,11 @@ export async function advanceDemoMarket() {
           i."tickValue"::text,
           i."defaultPrice"::text,
           pt."price"::text AS "latestPrice",
-          pt."createdAt" AS "latestCreatedAt"
+          pt."createdAt" AS "latestCreatedAt",
+          pt."source" AS "latestSource"
         FROM "Instrument" i
         LEFT JOIN LATERAL (
-          SELECT "price", "createdAt"
+          SELECT "price", "createdAt", "source"
           FROM "PriceTick"
           WHERE "instrumentId" = i."id"
           ORDER BY "createdAt" DESC
@@ -469,6 +473,16 @@ export async function advanceDemoMarket() {
     for (const instrument of instrumentsResult.rows) {
       const tickSize = Number(instrument.tickSize);
       const current = Number(instrument.latestPrice ?? instrument.defaultPrice);
+      const hasFreshLiveIngest =
+        instrument.latestSource === "ninjatrader" &&
+        instrument.latestCreatedAt != null &&
+        Date.now() - instrument.latestCreatedAt.getTime() <= LIVE_INGEST_FRESHNESS_MS;
+
+      if (hasFreshLiveIngest) {
+        nextPrices.set(instrument.instrumentId, current);
+        continue;
+      }
+
       const maxDrift = Math.max(tickSize * 4, current * 0.002);
       const nextPrice = roundToTick(Math.max(tickSize, current + ((Math.random() - 0.5) * maxDrift)), tickSize);
       nextPrices.set(instrument.instrumentId, nextPrice);
