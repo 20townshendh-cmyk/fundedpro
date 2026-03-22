@@ -8592,9 +8592,32 @@ h6 {
   font-size: 1rem;
 }
 
+.trade-close-button.secondary {
+  width: auto;
+  min-width: 34px;
+  padding: 0 8px;
+  border-color: rgba(96, 165, 250, 0.28);
+  background: rgba(96, 165, 250, 0.12);
+  color: #cfe6ff;
+  font-size: 0.7rem;
+}
+
 .trade-close-button:hover {
   background: rgba(234, 60, 83, 0.2);
   color: #ffd5dd;
+}
+
+.trade-close-button.secondary:hover {
+  background: rgba(96, 165, 250, 0.2);
+  color: #f4fbff;
+}
+
+.trade-position-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .trade-confirm-backdrop {
