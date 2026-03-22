@@ -311,6 +311,7 @@ export default async function TradeNowPage({ searchParams }: TradeNowPageProps) 
                   <div><span>Spread</span><strong>{formatPrice(displaySpreadAmount)}</strong></div>
                   <div><span>Capacity</span><strong>{formatWhole(maxContracts)}</strong></div>
                   <div><span>Change</span><strong className={Number(terminal.selectedInstrument?.changeAmount ?? 0) >= 0 ? "positive" : "negative"}>{formatSigned(terminal.selectedInstrument?.changeAmount)}</strong></div>
+                  <div><span>Session</span><strong>{terminal.sessionRegime}</strong></div>
                   <div><span>Feed</span><strong>{terminal.feedStatus === "live" ? "Live" : terminal.feedStatus === "simulated" ? "Sim" : "Stale"}</strong></div>
                   <div><span>Updated</span><strong>{feedUpdatedLabel}</strong></div>
                   <div><span>Position</span><strong>{terminal.positions.find((p) => p.symbol === symbol)?.quantity ?? 0}</strong></div>

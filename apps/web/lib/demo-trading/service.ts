@@ -12,6 +12,20 @@ type TerminalSearch = {
 
 const LIVE_INGEST_FRESHNESS_MS = 3_000;
 
+function getSessionRegime(now = new Date()) {
+  const hour = now.getUTCHours();
+
+  if (hour >= 13 && hour < 21) {
+    return "US" as const;
+  }
+
+  if (hour >= 7 && hour < 13) {
+    return "LONDON" as const;
+  }
+
+  return "OVERNIGHT" as const;
+}
+
 function getFeedStatus(input: { latestSource: string | null; latestTickAt: Date | null }) {
   if (input.latestSource === "ninjatrader" && input.latestTickAt && Date.now() - input.latestTickAt.getTime() <= LIVE_INGEST_FRESHNESS_MS) {
     return "live" as const;
@@ -437,6 +451,7 @@ export async function getDemoTradingTerminal(userId: string, search?: TerminalSe
     executionInstrument,
     marketDataSource,
     feedStatus,
+    sessionRegime: getSessionRegime(),
     feedFreshnessMs: LIVE_INGEST_FRESHNESS_MS,
     lastTickAt: selectedInstrumentWithDelayed?.latestTickAt?.toISOString() ?? null,
     chartTicks: chartTicksResult.rows.slice().reverse(),

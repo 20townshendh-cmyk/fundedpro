@@ -63,6 +63,20 @@ function isUsSessionOpen(now = new Date()) {
   return hour >= 13 && hour < 21;
 }
 
+function getSessionRegime(now = new Date()) {
+  const hour = now.getUTCHours();
+
+  if (hour >= 13 && hour < 21) {
+    return "US" as const;
+  }
+
+  if (hour >= 7 && hour < 13) {
+    return "LONDON" as const;
+  }
+
+  return "OVERNIGHT" as const;
+}
+
 function getExecutionSpreadTicks(input: {
   symbol: string;
   quantity: number;
@@ -89,6 +103,34 @@ function getExecutionSpreadTicks(input: {
   }
 
   return ticks;
+}
+
+function getSimulatedPriceMove(input: {
+  symbol: string;
+  current: number;
+  tickSize: number;
+  now?: Date;
+}) {
+  const regime = getSessionRegime(input.now);
+  const baseTicks =
+    regime === "US"
+      ? input.symbol === "NQ" ? 10 : 6
+      : regime === "LONDON"
+        ? input.symbol === "NQ" ? 7 : 4
+        : input.symbol === "NQ" ? 4 : 2;
+  const spikeChance =
+    regime === "US"
+      ? 0.1
+      : regime === "LONDON"
+        ? 0.05
+        : 0.015;
+  const directionalBias = (Math.random() - 0.5) * baseTicks * input.tickSize;
+  const spikeDirection = Math.random() > 0.5 ? 1 : -1;
+  const spikeAmount = Math.random() < spikeChance ? spikeDirection * baseTicks * input.tickSize * (1.5 + Math.random()) : 0;
+  const movement = directionalBias + spikeAmount;
+  const maxDrift = Math.max(input.tickSize * baseTicks, input.current * (regime === "US" ? 0.003 : regime === "LONDON" ? 0.002 : 0.0012));
+
+  return Math.max(-maxDrift, Math.min(maxDrift, movement));
 }
 
 function getMarketExecutionPrice(input: {
@@ -571,8 +613,12 @@ export async function advanceDemoMarket() {
         continue;
       }
 
-      const maxDrift = Math.max(tickSize * 4, current * 0.002);
-      const nextPrice = roundToTick(Math.max(tickSize, current + ((Math.random() - 0.5) * maxDrift)), tickSize);
+      const nextMove = getSimulatedPriceMove({
+        symbol: instrument.symbol,
+        current,
+        tickSize
+      });
+      const nextPrice = roundToTick(Math.max(tickSize, current + nextMove), tickSize);
       nextPrices.set(instrument.instrumentId, nextPrice);
 
       await client.query(
