@@ -76,7 +76,7 @@ export function TradeLiveProvider({ accountId, initialState, children }: TradeLi
     };
 
     void refresh();
-    const interval = window.setInterval(refresh, 400);
+    const interval = window.setInterval(refresh, 100);
 
     return () => {
       cancelled = true;

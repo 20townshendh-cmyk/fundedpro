@@ -12287,9 +12287,15 @@ h6 {
     background: #202637 !important;
   }
 
-  .trade-market-panel {
-    border-right: 0 !important;
+  .trade-blotter-panel {
+    order: 1 !important;
     border-bottom: 1px solid rgba(154, 167, 194, 0.12) !important;
+  }
+
+  .trade-market-panel {
+    order: 2 !important;
+    border-right: 0 !important;
+    border-bottom: 0 !important;
   }
 
   .trade-panel-title {
