@@ -444,7 +444,7 @@ export default async function TradeNowPage({ searchParams }: TradeNowPageProps) 
             <aside className="trade-control-panel">
               <div className="trade-panel-title">
                 <strong>Account Details</strong>
-                <span>Phynic</span>
+                <span>Trade Now</span>
               </div>
               <TradeAccountStatus initialAccount={terminal.activeAccount} mode="risk" />
             </aside>

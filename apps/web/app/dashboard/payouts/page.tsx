@@ -27,7 +27,7 @@ function renderShowcasePayouts(session: Awaited<ReturnType<typeof getSession>>) 
           </div>
           <nav className="sidebar-nav">
             <a className="sidebar-link sidebar-link-gold" href="/checkout">New Challenge</a>
-            <a className="sidebar-link" href="/dashboard/trades">Phynic</a>
+            <a className="sidebar-link" href="/dashboard/trades">Trade Now</a>
             <a className="sidebar-link" href="/dashboard">Overview</a>
             <a className="sidebar-link" href="/dashboard/account">Account detail</a>
             <a className="sidebar-link" href="/dashboard/trades?tab=history">Trade history</a>
@@ -231,7 +231,7 @@ export default async function PayoutsPage() {
           </div>
           <nav className="sidebar-nav">
             <a className="sidebar-link sidebar-link-gold" href="/checkout">New Challenge</a>
-            <a className="sidebar-link" href="/dashboard/trades">Phynic</a>
+            <a className="sidebar-link" href="/dashboard/trades">Trade Now</a>
             <a className="sidebar-link" href="/dashboard">Overview</a>
             <a className="sidebar-link" href="/dashboard/account">Account detail</a>
             <a className="sidebar-link" href="/dashboard/trades?tab=history">Trade history</a>
