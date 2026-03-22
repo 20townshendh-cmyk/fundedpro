@@ -42,6 +42,8 @@ export function LiveChart({ symbol, initialCandles, lastPrice, change, linkedSym
   const [currentPrice, setCurrentPrice] = useState(lastPrice);
   const [currentChange, setCurrentChange] = useState(change);
   const [isLoading, setIsLoading] = useState(false);
+  const [feedBadge, setFeedBadge] = useState<"live" | "simulated" | "delayed" | "loading">("loading");
+  const [lastTickAt, setLastTickAt] = useState<string | null>(null);
 
   function normalizeCandles(candles: DemoCandle[]) {
     return [...candles]
@@ -176,6 +178,32 @@ export function LiveChart({ symbol, initialCandles, lastPrice, change, linkedSym
     let cancelled = false;
     let inFlight = false;
     let timeoutId: number | null = null;
+    let eventSource: EventSource | null = null;
+
+    function applyIncomingData(data: {
+      candles: DemoCandle[];
+      lastPrice: number;
+      source: "INTERNAL" | "DELAYED_EXTERNAL" | "EMPTY";
+      tickSource: "ninjatrader" | "simulated" | null;
+      lastTickAt: string | null;
+    }) {
+      if (cancelled || !seriesRef.current) {
+        return;
+      }
+
+      seriesRef.current.setData(toCandleData(data.candles));
+      setCurrentChange(data.lastPrice - currentPriceRef.current);
+      currentPriceRef.current = data.lastPrice;
+      setCurrentPrice(data.lastPrice);
+      setLastTickAt(data.lastTickAt);
+      setFeedBadge(
+        data.source === "DELAYED_EXTERNAL"
+          ? "delayed"
+          : data.tickSource === "ninjatrader"
+            ? "live"
+            : "simulated"
+      );
+    }
 
     async function refresh() {
       if (cancelled || inFlight) {
@@ -192,16 +220,15 @@ export function LiveChart({ symbol, initialCandles, lastPrice, change, linkedSym
           return;
         }
 
-        const data = await response.json() as { candles: DemoCandle[]; lastPrice: number };
+        const data = await response.json() as {
+          candles: DemoCandle[];
+          lastPrice: number;
+          source: "INTERNAL" | "DELAYED_EXTERNAL" | "EMPTY";
+          tickSource: "ninjatrader" | "simulated" | null;
+          lastTickAt: string | null;
+        };
 
-        if (cancelled || !seriesRef.current) {
-          return;
-        }
-
-        seriesRef.current.setData(toCandleData(data.candles));
-        setCurrentChange(data.lastPrice - currentPriceRef.current);
-        currentPriceRef.current = data.lastPrice;
-        setCurrentPrice(data.lastPrice);
+        applyIncomingData(data);
       } finally {
         inFlight = false;
         if (!cancelled) {
@@ -211,15 +238,37 @@ export function LiveChart({ symbol, initialCandles, lastPrice, change, linkedSym
         if (!cancelled) {
           timeoutId = window.setTimeout(() => {
             void refresh();
-          }, 2500);
+          }, 250);
         }
       }
     }
 
-    void refresh();
+    try {
+      eventSource = new EventSource(`/api/demo-trading/chart/stream?symbol=${encodeURIComponent(activeSymbol)}&timeframe=${encodeURIComponent(timeframe)}`);
+      setIsLoading(true);
+      eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data) as {
+          candles: DemoCandle[];
+          lastPrice: number;
+          source: "INTERNAL" | "DELAYED_EXTERNAL" | "EMPTY";
+          tickSource: "ninjatrader" | "simulated" | null;
+          lastTickAt: string | null;
+        };
+        applyIncomingData(data);
+        setIsLoading(false);
+      };
+      eventSource.onerror = () => {
+        eventSource?.close();
+        eventSource = null;
+        void refresh();
+      };
+    } catch {
+      void refresh();
+    }
 
     return () => {
       cancelled = true;
+      eventSource?.close();
       if (timeoutId !== null) {
         window.clearTimeout(timeoutId);
       }
@@ -271,6 +320,14 @@ export function LiveChart({ symbol, initialCandles, lastPrice, change, linkedSym
         </div>
         <div className="trade-chart-live-price">
           {isLoading ? <span className="trade-data-badge delayed">Loading</span> : null}
+          {!isLoading && feedBadge === "live" ? <span className="trade-data-badge live">Live Ticks</span> : null}
+          {!isLoading && feedBadge === "simulated" ? <span className="trade-data-badge simulated">Simulated Live</span> : null}
+          {!isLoading && feedBadge === "delayed" ? <span className="trade-data-badge delayed">Delayed Fallback</span> : null}
+          {!isLoading && lastTickAt ? (
+            <span className="trade-data-badge simulated">
+              Updated {new Date(lastTickAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+            </span>
+          ) : null}
           <strong>{currentPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
           <span className={currentChange >= 0 ? "positive" : "negative"}>
             {currentChange.toLocaleString("en-US", { signDisplay: "always", minimumFractionDigits: 2, maximumFractionDigits: 2 })}

@@ -22,11 +22,26 @@ function formatUsd(value: number) {
   return value.toLocaleString("en-GB", { style: "currency", currency: "USD" });
 }
 
+function formatAge(createdAt: Date) {
+  const ageMs = Date.now() - createdAt.getTime();
+
+  if (ageMs < 1_000) {
+    return "<1s ago";
+  }
+
+  if (ageMs < 60_000) {
+    return `${Math.floor(ageMs / 1_000)}s ago`;
+  }
+
+  return `${Math.floor(ageMs / 60_000)}m ago`;
+}
+
 export default async function AdminSyncPage() {
   await requireAdmin();
 
   const db = getDb();
-  const [accountResult, fleetResult] = await Promise.all([
+  const liveIngestFreshnessMs = 3_000;
+  const [accountResult, fleetResult, ninjaTraderTicks] = await Promise.all([
     db.query<{ login: string }>(
       'SELECT "login" FROM "TradingAccount" ORDER BY "updatedAt" DESC LIMIT 1'
     ),
@@ -35,12 +50,25 @@ export default async function AdminSyncPage() {
         COUNT(*)::text AS "accounts",
         COUNT(*) FILTER (WHERE "status" = 'SUCCESS')::text AS "success",
         COUNT(*) FILTER (WHERE "status" = 'FAILED')::text AS "failed"
-      FROM (
+        FROM (
         SELECT DISTINCT ON ("tradingAccountId") "tradingAccountId", "status"
         FROM "Mt5SyncRun"
         ORDER BY "tradingAccountId", "syncedAt" DESC
       ) latest
-    `)
+    `),
+    db.query<{ symbol: string; source: string; price: string; createdAt: Date }>(
+      `
+        SELECT DISTINCT ON (i."symbol")
+          i."symbol",
+          pt."source",
+          pt."price"::text AS "price",
+          pt."createdAt"
+        FROM "PriceTick" pt
+        JOIN "Instrument" i ON i."id" = pt."instrumentId"
+        WHERE i."symbol" IN ('ES', 'NQ')
+        ORDER BY i."symbol", pt."createdAt" DESC
+      `
+    )
   ]);
 
   const login = accountResult.rows[0]?.login;
@@ -113,6 +141,18 @@ export default async function AdminSyncPage() {
                 <article className="inline-metric">
                   <span>Fleet sync</span>
                   <strong>{`${fleetResult.rows[0]?.success ?? "0"}/${fleetResult.rows[0]?.accounts ?? "0"}`}</strong>
+                </article>
+                <article className="inline-metric">
+                  <span>Live ticks</span>
+                  <strong>
+                    {ninjaTraderTicks.rows.some(
+                      (row) =>
+                        row.source === "ninjatrader" &&
+                        Date.now() - row.createdAt.getTime() <= liveIngestFreshnessMs
+                    )
+                      ? "Connected"
+                      : "Simulated"}
+                  </strong>
                 </article>
               </div>
             </div>
@@ -234,6 +274,81 @@ export default async function AdminSyncPage() {
                   </div>
                 )}
               </div>
+            </article>
+            <article className="surface-card desk-card">
+              <div className="detail-head">
+                <div>
+                  <span className="muted-label">NinjaTrader ingest</span>
+                  <strong className="metric-value">ES / NQ live market feed</strong>
+                </div>
+              </div>
+              <div className="session-table">
+                {ninjaTraderTicks.rows.length ? (
+                  ninjaTraderTicks.rows.map((tick) => (
+                    <div className="session-row" key={tick.symbol}>
+                      <span>{tick.symbol}</span>
+                      <strong>
+                        {tick.source === "ninjatrader" && Date.now() - tick.createdAt.getTime() <= liveIngestFreshnessMs
+                          ? "Live tick"
+                          : tick.source === "ninjatrader"
+                            ? "Stale live tick"
+                            : "Simulated tick"}
+                      </strong>
+                      <span>
+                        {tick.price} | {new Date(tick.createdAt).toLocaleString("en-GB")} | {formatAge(tick.createdAt)}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="session-row">
+                    <span>Feed</span>
+                    <strong>No ticks yet</strong>
+                    <span>Configure the NinjaTrader ingest token and push live ES/NQ ticks into the market-data endpoint.</span>
+                  </div>
+                )}
+              </div>
+            </article>
+          </section>
+
+          <section className="dashboard-desk-grid admin-sync-top-grid">
+            <article className="surface-card desk-card">
+              <div className="detail-head">
+                <div>
+                  <span className="muted-label">Ingest setup</span>
+                  <strong className="metric-value">Bridge your live tick source</strong>
+                </div>
+              </div>
+              <div className="session-table">
+                <div className="session-row">
+                  <span>Endpoint</span>
+                  <strong>/api/market-data/ninjatrader</strong>
+                  <span>Use this authenticated endpoint to send ES and NQ ticks into Trade Now.</span>
+                </div>
+                <div className="session-row">
+                  <span>Header</span>
+                  <strong>Authorization: Bearer token</strong>
+                  <span>The bearer value must match NINJATRADER_INGEST_TOKEN in the FundedPro environment.</span>
+                </div>
+                <div className="session-row">
+                  <span>Freshness</span>
+                  <strong>{`${liveIngestFreshnessMs / 1_000}s live window`}</strong>
+                  <span>When fresh live ticks are arriving inside this window, simulation backs off and Trade Now prefers those prices.</span>
+                </div>
+              </div>
+            </article>
+            <article className="surface-card desk-card">
+              <div className="detail-head">
+                <div>
+                  <span className="muted-label">Sample payload</span>
+                  <strong className="metric-value">Expected tick batch</strong>
+                </div>
+              </div>
+              <pre className="payload-block">{`{
+  "ticks": [
+    { "symbol": "ES", "price": 4916.25, "timestamp": "2026-03-22T15:26:00.000Z" },
+    { "symbol": "NQ", "price": 18342.75, "timestamp": "2026-03-22T15:26:00.000Z" }
+  ]
+}`}</pre>
             </article>
           </section>
 

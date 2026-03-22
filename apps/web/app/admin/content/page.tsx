@@ -126,7 +126,7 @@ export default async function AdminContentPage() {
                 <div className="session-row">
                   <span>Accuracy</span>
                   <strong>Rules aligned</strong>
-                  <span>Challenge, payout, and platform wording should reflect the internal Trade Now environment.</span>
+                  <span>Challenge, payout, and platform wording should reflect the internal Phynic environment.</span>
                 </div>
                 <div className="session-row">
                   <span>Risk</span>

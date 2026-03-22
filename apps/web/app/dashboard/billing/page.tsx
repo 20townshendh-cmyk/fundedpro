@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation";
 import { getDb } from "@fundedpro/db";
 import { Footer, SiteShell, TopNav } from "@fundedpro/ui";
-import { getSession, logoutAction } from "../../../lib/auth";
+import { getSession } from "../../../lib/auth";
 import { ensureOwnerShowcaseWorkspace } from "../../../lib/owner-showcase";
 import { startChallengeCheckoutAction } from "../../../lib/trader";
 import { showcaseWorkspace } from "../../../lib/showcase-workspace";
+import { DashboardSidebar } from "../dashboard-sidebar";
 
 function formatUsd(cents: number) {
   return (cents / 100).toLocaleString("en-GB", { style: "currency", currency: "USD" });
@@ -18,28 +19,11 @@ function renderShowcaseBilling(session: Awaited<ReturnType<typeof getSession>>) 
     <SiteShell>
       <TopNav />
       <main className="dashboard-shell">
-        <aside className="dashboard-sidebar">
-          <div className="sidebar-brand">
-            <p className="eyebrow">Trader workspace</p>
-            <h2 className="sidebar-title">FundedPro</h2>
-            <p className="surface-copy">Billing visibility for challenge purchases, invoices, and account-related charges.</p>
-          </div>
-          <nav className="sidebar-nav">
-            <a className="sidebar-link sidebar-link-gold" href="/checkout">New Challenge</a>
-            <a className="sidebar-link" href="/dashboard/trades">Trade Now</a>
-            <a className="sidebar-link" href="/dashboard">Overview</a>
-            <a className="sidebar-link" href="/dashboard/account">Account detail</a>
-            <a className="sidebar-link" href="/dashboard/trades?tab=history">Trade history</a>
-            <a className="sidebar-link active" href="/dashboard/billing">Billing</a>
-            <a className="sidebar-link" href="/dashboard/payouts">Payouts</a>
-            <a className="sidebar-link" href="/dashboard/support">Support</a>
-            <a className="sidebar-link" href="/login">Switch account</a>
-            {session?.role === "ADMIN" ? <a className="sidebar-link" href="/admin">Admin panel</a> : null}
-          </nav>
-          <form action={logoutAction}>
-            <button className="ghost-button" type="submit">Log out</button>
-          </form>
-        </aside>
+        <DashboardSidebar
+          active="billing"
+          isAdmin={session?.role === "ADMIN"}
+          description="Billing visibility for challenge purchases, invoices, and account-related charges."
+        />
 
         <section className="dashboard-main account-page">
           <section className="dashboard-hero">
@@ -225,30 +209,11 @@ export default async function BillingPage() {
     <SiteShell>
       <TopNav />
       <main className="dashboard-shell">
-        <aside className="dashboard-sidebar">
-          <div className="sidebar-brand">
-            <p className="eyebrow">Trader workspace</p>
-            <h2 className="sidebar-title">FundedPro</h2>
-            <p className="surface-copy">Billing visibility for challenge purchases, invoices, and account-related charges.</p>
-          </div>
-          <nav className="sidebar-nav">
-            <a className="sidebar-link sidebar-link-gold" href="/checkout">New Challenge</a>
-            <a className="sidebar-link" href="/dashboard/trades">Trade Now</a>
-            <a className="sidebar-link" href="/dashboard">Overview</a>
-            <a className="sidebar-link" href="/dashboard/account">Account detail</a>
-            <a className="sidebar-link" href="/dashboard/trades?tab=history">Trade history</a>
-            <a className="sidebar-link active" href="/dashboard/billing">Billing</a>
-            <a className="sidebar-link" href="/dashboard/payouts">Payouts</a>
-            <a className="sidebar-link" href="/dashboard/support">Support</a>
-            <a className="sidebar-link" href="/login">Switch account</a>
-            {session.role === "ADMIN" ? <a className="sidebar-link" href="/admin">Admin panel</a> : null}
-          </nav>
-          <form action={logoutAction}>
-            <button className="ghost-button" type="submit">
-              Log out
-            </button>
-          </form>
-        </aside>
+        <DashboardSidebar
+          active="billing"
+          isAdmin={session.role === "ADMIN"}
+          description="Billing visibility for challenge purchases, invoices, and account-related charges."
+        />
 
         <section className="dashboard-main account-page">
           <section className="dashboard-hero">

@@ -190,7 +190,7 @@ export async function ensureDemoTradingWorkspaceForTradingAccount(input: {
       `linked-demo-bootstrap-${input.tradingAccountId}`,
       input.userId,
       demoAccountId,
-      `Internal Trade Now account created for ${input.accountName}.`,
+      `Internal Phynic account created for ${input.accountName}.`,
       JSON.stringify({ source: "trading-account-link", tradingAccountId: input.tradingAccountId })
     ]
   );

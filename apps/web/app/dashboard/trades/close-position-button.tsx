@@ -14,6 +14,13 @@ type ClosePositionButtonProps = {
   accountId: string | undefined;
   timeframe: string;
   layout: string;
+  triggerLabel?: string;
+  triggerAriaLabel?: string;
+  title?: string;
+  message?: string;
+  confirmLabel?: string;
+  confirmTone?: "danger" | "warning";
+  className?: string;
 };
 
 export function ClosePositionButton({
@@ -24,22 +31,29 @@ export function ClosePositionButton({
   quantity,
   accountId,
   timeframe,
-  layout
+  layout,
+  triggerLabel = "X",
+  triggerAriaLabel,
+  title,
+  message,
+  confirmLabel = "Close position",
+  confirmTone = "danger",
+  className = "trade-close-button"
 }: ClosePositionButtonProps) {
   const router = useRouter();
   const [isPending, setIsPending] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [messageText, setMessageText] = useState<string | null>(null);
 
   return (
     <>
       <TradeConfirmAction
-        triggerClassName="trade-close-button"
-        triggerLabel="×"
-        triggerAriaLabel={`Close ${symbol} position`}
-        title={`Close ${symbol} position`}
-        message={`Submit a market order to close ${quantity} contract${quantity === 1 ? "" : "s"} of ${symbol}?`}
-        confirmLabel="Close position"
-        confirmTone="danger"
+        triggerClassName={className}
+        triggerLabel={triggerLabel}
+        triggerAriaLabel={triggerAriaLabel ?? `${confirmLabel} ${symbol} position`}
+        title={title ?? `${confirmLabel} ${symbol} position`}
+        message={message ?? `Submit a market order to close ${quantity} contract${quantity === 1 ? "" : "s"} of ${symbol}?`}
+        confirmLabel={confirmLabel}
+        confirmTone={confirmTone}
         disabled={isPending}
         onConfirm={async () => {
           const formData = new FormData();
@@ -54,13 +68,19 @@ export function ClosePositionButton({
           formData.set("timeframe", timeframe);
           formData.set("layout", layout);
 
-          setMessage(null);
+          setMessageText(null);
           setIsPending(true);
           await new Promise<void>((resolve) => {
             startTransition(async () => {
               const result = await submitDemoOrderAction(formData);
               if (!result.ok) {
-                setMessage(result.error === "market-closed" ? "Market is closed for this instrument right now." : "Order was rejected. Check buying power and inputs.");
+                setMessageText(
+                  result.error === "market-closed"
+                    ? "Market is closed for this instrument right now."
+                    : result.error === "price-stale"
+                      ? "Execution price is stale. Wait for a fresh tick before sending a market order."
+                      : "Order was rejected. Check buying power and inputs."
+                );
               }
               router.refresh();
               setIsPending(false);
@@ -69,7 +89,7 @@ export function ClosePositionButton({
           });
         }}
       />
-      {message ? <small className="negative">{message}</small> : null}
+      {messageText ? <small className="negative">{messageText}</small> : null}
     </>
   );
 }

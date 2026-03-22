@@ -1,5 +1,8 @@
 import { MARKETING_SALE_DISCOUNT_PCT, type ChallengePlan, type FAQItem, type SimpleFeature, type TrustMetric } from "@fundedpro/domain/marketing";
 import { HeroTreeScene } from "./hero-tree-scene";
+import { FooterLogo, TopNav } from "./top-nav";
+
+export { TopNav } from "./top-nav";
 
 const primaryButtonStyle: React.CSSProperties = {
   display: "inline-flex",
@@ -22,75 +25,15 @@ const ghostButtonStyle: React.CSSProperties = {
   boxShadow: "none"
 };
 
-function LogoMark() {
-  return (
-    <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true">
-      <defs>
-        <linearGradient id="fundedpro-mark" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#143628" />
-          <stop offset="100%" stopColor="#0b2118" />
-        </linearGradient>
-        <linearGradient id="fundedpro-leaves" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#d8fff1" />
-          <stop offset="55%" stopColor="#7cf3b4" />
-          <stop offset="100%" stopColor="#22c55e" />
-        </linearGradient>
-        <linearGradient id="fundedpro-trunk" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#f4d6b0" />
-          <stop offset="100%" stopColor="#9a5b2d" />
-        </linearGradient>
-      </defs>
-      <rect x="1" y="1" width="38" height="38" rx="12" fill="url(#fundedpro-mark)" />
-      <circle cx="15" cy="16" r="5.5" fill="url(#fundedpro-leaves)" />
-      <circle cx="22" cy="13.5" r="6.5" fill="url(#fundedpro-leaves)" />
-      <circle cx="27" cy="18" r="5" fill="url(#fundedpro-leaves)" />
-      <circle cx="20" cy="20" r="7.2" fill="url(#fundedpro-leaves)" />
-      <circle cx="13.5" cy="21" r="4.2" fill="url(#fundedpro-leaves)" opacity="0.95" />
-      <rect x="17" y="21" width="6" height="10" rx="3" fill="url(#fundedpro-trunk)" />
-      <path d="M16 31c1.2-2.8 2.5-4.2 4-4.2s2.8 1.4 4 4.2h-2.7c-.6-1.3-.9-2-1.3-2s-.7.7-1.3 2Z" fill="#6b3f1f" />
-    </svg>
-  );
-}
-
 export function SiteShell({ children }: { children: React.ReactNode }) {
   return <div className="site-shell">{children}</div>;
-}
-
-export function TopNav() {
-  return (
-    <header className="top-nav">
-      <a href="/" className="brand-link">
-        <LogoMark />
-        <span className="brand-text">FundedPro</span>
-      </a>
-      <nav className="nav-links">
-        <a href="/">Home</a>
-        <a href="/why-fundedpro">About</a>
-        <a href="/how-it-works">How It Works</a>
-        <a href="/challenges">Challenges</a>
-        <a href="/payouts">Payouts</a>
-        <a href="/dashboard">Trader Area</a>
-      </nav>
-      <div className="nav-actions">
-        <a href="/login" style={ghostButtonStyle}>
-          Login
-        </a>
-        <a href="/signup" style={ghostButtonStyle}>
-          Sign Up
-        </a>
-      </div>
-    </header>
-  );
 }
 
 export function Footer() {
   return (
     <footer className="footer-panel">
       <div>
-        <div className="brand-link" style={{ marginBottom: "12px" }}>
-          <LogoMark />
-          <span className="brand-text">FundedPro</span>
-        </div>
+        <FooterLogo />
         <p className="footer-copy">
           FundedPro is built for disciplined traders who want premium visibility, transparent rules, and a more professional path through evaluation and funded progression.
         </p>
@@ -112,6 +55,7 @@ export function Footer() {
 export function HomeHero() {
   return (
     <section className="hero-stage">
+      <div className="home-hero-desktop">
       <TopNav />
       <div className="hero-orb hero-orb-left" />
       <div className="hero-orb hero-orb-right" />
@@ -128,7 +72,7 @@ export function HomeHero() {
               <span className="hero-inline-rotator">
                 <span>Futures</span>
                 {" "}
-                <span className="hero-word-rotator" aria-label="Analyst, Pro, Expert, Professional">
+                <span className="hero-word-rotator hero-word-rotator-desktop" aria-label="Analyst, Pro, Expert, Professional">
                   <span className="hero-word-rotator-track">
                     <span>Analyst</span>
                     <span>Pro</span>
@@ -136,6 +80,7 @@ export function HomeHero() {
                     <span>Professional</span>
                   </span>
                 </span>
+                <span className="hero-word-static-mobile">Trader</span>
               </span>
             </span>
           </h1>
@@ -151,8 +96,11 @@ export function HomeHero() {
           </div>
 
           <div className="button-row hero-button-row">
-            <a href="/signup" style={primaryButtonStyle}>
+            <a href="/signup" style={primaryButtonStyle} className="button-primary">
               Start FundedPro Evaluation
+            </a>
+            <a href="/challenges" style={ghostButtonStyle} className="button-secondary">
+              View Challenge Plans
             </a>
           </div>
 
@@ -175,7 +123,72 @@ export function HomeHero() {
             </article>
           </div>
         </div>
-
+      </div>
+      </div>
+      <div className="home-hero-mobile">
+        <TopNav />
+        <div className="home-hero-mobile-card">
+          <div className="home-hero-mobile-card-scene" aria-hidden="true">
+            <div className="hero-orb hero-orb-left" />
+            <div className="hero-orb hero-orb-right" />
+            <div className="home-hero-mobile-scene">
+              <HeroTreeScene />
+            </div>
+            <div className="home-hero-mobile-tree">
+              <span className="home-hero-mobile-tree-glow" />
+              <span className="home-hero-mobile-tree-trunk" />
+              <span className="home-hero-mobile-tree-branch branch-left-low" />
+              <span className="home-hero-mobile-tree-branch branch-right-low" />
+              <span className="home-hero-mobile-tree-branch branch-left-high" />
+              <span className="home-hero-mobile-tree-branch branch-right-high" />
+              <span className="home-hero-mobile-tree-canopy canopy-main" />
+              <span className="home-hero-mobile-tree-canopy canopy-left" />
+              <span className="home-hero-mobile-tree-canopy canopy-right" />
+              <span className="home-hero-mobile-tree-canopy canopy-top" />
+            </div>
+          </div>
+          <span className="hero-kicker">Brought to you by FundedPro</span>
+          <h1 className="hero-title home-hero-mobile-title">
+            Trade Like a Professional
+            {" "}
+            <span className="accent-text">Futures Analyst</span>
+          </h1>
+          <p className="hero-copy home-hero-mobile-copy">
+            Prove your skills in our one step evaluation, and receive up to $2M in simulated funds from the firm.
+          </p>
+          <div className="hero-trust-strip home-hero-mobile-trust">
+            <strong>Excellent</strong>
+            <span className="hero-stars">★★★★★</span>
+            <span>3,094 reviews</span>
+            <span>on Trustpilot</span>
+          </div>
+          <div className="button-row hero-button-row home-hero-mobile-actions">
+            <a href="/signup" style={primaryButtonStyle} className="button-primary">
+              Start FundedPro Evaluation
+            </a>
+            <a href="/challenges" style={ghostButtonStyle} className="button-secondary">
+              View Challenge Plans
+            </a>
+          </div>
+          <div className="hero-metrics-band home-hero-mobile-metrics">
+            <article className="hero-metric-tile">
+              <strong>75,000+</strong>
+              <span>Simulated traders onboarded</span>
+            </article>
+            <article className="hero-metric-tile">
+              <strong>500,000+</strong>
+              <span>Tracked evaluation sessions</span>
+            </article>
+            <article className="hero-metric-tile">
+              <strong>$25M+</strong>
+              <span>Funding ambition modelled</span>
+            </article>
+            <article className="hero-metric-tile">
+              <strong>5hr Avg</strong>
+              <span>Withdrawal time</span>
+            </article>
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -203,12 +216,12 @@ export function PageHero({
         {(primaryCta || secondaryCta) && (
           <div className="button-row">
             {primaryCta ? (
-              <a href={primaryCta.href} style={primaryButtonStyle}>
+              <a href={primaryCta.href} style={primaryButtonStyle} className="button-primary">
                 {primaryCta.label}
               </a>
             ) : null}
             {secondaryCta ? (
-              <a href={secondaryCta.href} style={ghostButtonStyle}>
+              <a href={secondaryCta.href} style={ghostButtonStyle} className="button-secondary">
                 {secondaryCta.label}
               </a>
             ) : null}
@@ -281,7 +294,7 @@ export function PriceCard(plan: ChallengePlan) {
           <li key={highlight}>{highlight}</li>
         ))}
       </ul>
-      <a href="/checkout" style={ghostButtonStyle} className="pricing-card-cta">
+      <a href="/checkout" style={ghostButtonStyle} className="pricing-card-cta button-secondary">
         Choose Plan
       </a>
     </article>
@@ -332,11 +345,11 @@ export function CTASection({
         <p className="section-copy">{description}</p>
       </div>
       <div className="button-row">
-        <a href={primary.href} style={primaryButtonStyle}>
+        <a href={primary.href} style={primaryButtonStyle} className="button-primary">
           {primary.label}
         </a>
         {secondary ? (
-          <a href={secondary.href} style={ghostButtonStyle}>
+          <a href={secondary.href} style={ghostButtonStyle} className="button-secondary">
             {secondary.label}
           </a>
         ) : null}
@@ -394,7 +407,7 @@ export function AuthCard({
               <span>Remember me</span>
             </label>
           ) : null}
-          <button type="submit" style={primaryButtonStyle}>
+          <button type="submit" style={primaryButtonStyle} className="button-primary">
             {submitLabel}
           </button>
         </form>

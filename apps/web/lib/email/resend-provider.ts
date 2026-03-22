@@ -24,7 +24,8 @@ export class ResendEmailProvider implements EmailProvider {
     });
 
     if (!response.ok) {
-      throw new Error(`Resend request failed with status ${response.status}`);
+      const errorText = await response.text().catch(() => "");
+      throw new Error(`Resend request failed with status ${response.status}${errorText ? `: ${errorText}` : ""}`);
     }
   }
 }

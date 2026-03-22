@@ -5,7 +5,7 @@ import { faqItems } from "@fundedpro/domain/marketing";
 export const metadata: Metadata = {
   title: "FAQ | FundedPro Futures Prop Firm Questions",
   description:
-    "Get straight answers on FundedPro challenges, payouts, Trade Now access, account setup, and trader expectations before checkout."
+    "Get straight answers on FundedPro challenges, payouts, Phynic access, account setup, and trader expectations before checkout."
 };
 
 export default function FAQPage() {
@@ -21,7 +21,7 @@ export default function FAQPage() {
         <MarketingSection
           eyebrow="Common questions"
           title="Clarity matters when traders are deciding where to commit"
-          description="These are the launch FAQs for product structure, payouts, Trade Now access, and compliance posture."
+          description="These are the launch FAQs for product structure, payouts, Phynic access, and compliance posture."
         >
           <FAQList items={faqItems} />
         </MarketingSection>

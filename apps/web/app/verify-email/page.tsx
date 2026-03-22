@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { SiteShell } from "@fundedpro/ui";
 import { getDb } from "@fundedpro/db";
+import { sendWelcomeEmail } from "../../lib/email/service";
 
 const EMAIL_VERIFICATION_WINDOW_MINUTES = 10;
 
@@ -16,9 +17,9 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
   }
 
   const db = getDb();
-  const tokenResult = await db.query<{ id: string; emailVerificationSentAt: string | null }>(
+  const tokenResult = await db.query<{ id: string; fullName: string; email: string; emailVerificationSentAt: string | null }>(
     `
-      SELECT "id", "emailVerificationSentAt"
+      SELECT "id", "fullName", "email", "emailVerificationSentAt"
       FROM "User"
       WHERE "emailVerificationToken" = $1
       LIMIT 1;
@@ -57,13 +58,22 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
     redirect("/login?error=invalid-verification");
   }
 
+  try {
+    await sendWelcomeEmail({
+      to: tokenRow.email,
+      fullName: tokenRow.fullName
+    });
+  } catch (error) {
+    console.error("welcome-email-failed", { userId: tokenRow.id, error });
+  }
+
   return (
     <SiteShell>
       <main className="signup-page">
         <section className="signup-shell signup-status-shell">
           <h1 className="signup-title">Email verified</h1>
           <p className="page-copy signup-status-copy">
-            Your email is confirmed. You can now sign in to your FundedPro account.
+            Your email is confirmed. You can now sign in to your FundedPro account, and your welcome email is on the way.
           </p>
           <a href="/login" className="ghost-button signup-status-button">Go to sign in</a>
         </section>

@@ -28,7 +28,7 @@ function getPageContext(path: string) {
   }
 
   if (path.startsWith("/how-it-works")) {
-    return "The user is on the process page and is likely asking how checkout, provisioning, credentials, and Trade Now fit together.";
+    return "The user is on the process page and is likely asking how checkout, provisioning, credentials, and Phynic fit together.";
   }
 
   if (path.startsWith("/dashboard/trades")) {
@@ -83,15 +83,15 @@ function buildFallbackReply(path: string, lastUserMessage: string) {
 
   if (normalized.includes("trade") || normalized.includes("order") || normalized.includes("position")) {
     return {
-      message: "Use your trading account credentials, not your website password, to access Trade Now. Orders can be blocked if the market is closed, buying power is insufficient, or the selected account is still locked.",
-      ctaLabel: "Open Trade Now",
+      message: "Use your trading account credentials, not your website password, to access Phynic. Orders can be blocked if the market is closed, buying power is insufficient, or the selected account is still locked.",
+      ctaLabel: "Open Phynic",
       ctaHref: "/dashboard/trades"
     };
   }
 
   return {
     message: path.startsWith("/dashboard")
-      ? "I can help with billing, payouts, account access, Trade Now, and general dashboard guidance. Tell me what you are trying to do and I will help you work through it."
+      ? "I can help with billing, payouts, account access, Phynic, and general dashboard guidance. Tell me what you are trying to do and I will help you work through it."
       : "I can help explain plans, checkout, platform access, and support routing. Tell me what you are trying to do and I will guide you from there.",
     ctaLabel: path.startsWith("/dashboard") ? "Open support" : "Contact support",
     ctaHref: path.startsWith("/dashboard") ? "/dashboard/support" : "/contact"
@@ -153,7 +153,7 @@ export async function POST(request: Request) {
     "Respond with the same kind of clarity, confidence, and natural flow a strong ChatGPT answer would have.",
     "Be warm, polished, intelligent, and genuinely helpful.",
     "Sound like a capable assistant, not a branded support script.",
-    "You can help with product understanding, plans, checkout, billing, account access, platform login, Trade Now usage, payout readiness, dashboard navigation, and support routing.",
+    "You can help with product understanding, plans, checkout, billing, account access, platform login, Phynic usage, payout readiness, dashboard navigation, and support routing.",
     "You may explain what pages do, what steps users should take next, and what common blockers mean.",
     "Never invent balances, internal status, legal guarantees, or account-specific outcomes you cannot verify.",
     "Do not give financial advice or claim live broker execution.",
@@ -169,7 +169,7 @@ export async function POST(request: Request) {
     "If there is a likely next action, end with one concrete next step.",
     "Important product facts:",
     "- FundedPro sells challenge accounts.",
-    "- Trade Now is the internal-only simulated futures platform.",
+    "- Phynic is the internal-only simulated futures platform.",
     "- Trading credentials are separate from the website password.",
     "- Dashboard metrics come from internal demo-trading state.",
     "- Reward requests only apply to funded accounts after eligibility checks.",

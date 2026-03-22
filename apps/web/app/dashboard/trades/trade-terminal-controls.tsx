@@ -70,6 +70,8 @@ export function TradeTerminalControls({
             ? "Market is closed for this instrument right now."
             : result.error === "account-breached"
               ? "Account breached. New trade entry is disabled."
+              : result.error === "price-stale"
+                ? "Execution price is stale. Wait for a fresh tick before sending a market order."
               : "Order was rejected. Check buying power and inputs."
         );
       }

@@ -38,21 +38,15 @@ function getIntervalSeconds(timeframe?: string) {
 export async function getChartFeed(input: {
   symbol: string;
   timeframe?: string;
-}): Promise<{ candles: DemoCandle[]; lastPrice: number; source: "INTERNAL" | "DELAYED_EXTERNAL" | "EMPTY" }> {
+}): Promise<{
+  candles: DemoCandle[];
+  lastPrice: number;
+  source: "INTERNAL" | "DELAYED_EXTERNAL" | "EMPTY";
+  tickSource: "ninjatrader" | "simulated" | null;
+  lastTickAt: string | null;
+}> {
   const timeframe = getTimeframe(input.timeframe);
   const db = getDb();
-
-  if (supportsDelayedChartSymbol(input.symbol)) {
-    const delayed = await getDelayedSnapshot(input.symbol, timeframe);
-
-    if (delayed?.candles.length) {
-      return {
-        candles: delayed.candles,
-        lastPrice: delayed.price,
-        source: "DELAYED_EXTERNAL"
-      };
-    }
-  }
 
   const instrumentResult = await db.query<{ instrumentId: string }>(
     `
@@ -66,9 +60,9 @@ export async function getChartFeed(input: {
   const instrument = instrumentResult.rows[0];
 
   if (instrument) {
-    const ticksResult = await db.query<{ price: string; createdAt: Date }>(
+    const ticksResult = await db.query<{ price: string; createdAt: Date; source: string }>(
       `
-        SELECT "price"::text, "createdAt"
+        SELECT "price"::text, "createdAt", "source"
         FROM "PriceTick"
         WHERE "instrumentId" = $1
         ORDER BY "createdAt" DESC
@@ -86,7 +80,14 @@ export async function getChartFeed(input: {
         return {
           candles,
           lastPrice,
-          source: "INTERNAL"
+          source: "INTERNAL",
+          tickSource:
+            ticks[ticks.length - 1]?.source === "ninjatrader"
+              ? "ninjatrader"
+              : ticks[ticks.length - 1]?.source === "simulated"
+                ? "simulated"
+                : null,
+          lastTickAt: ticks[ticks.length - 1]?.createdAt?.toISOString() ?? null
         };
       }
     }
@@ -100,14 +101,18 @@ export async function getChartFeed(input: {
     return {
       candles: delayed.candles,
       lastPrice: delayed.price,
-      source: "DELAYED_EXTERNAL"
+      source: "DELAYED_EXTERNAL",
+      tickSource: null,
+      lastTickAt: null
     };
   }
 
   return {
     candles: [],
     lastPrice: 0,
-    source: "EMPTY"
+    source: "EMPTY",
+    tickSource: null,
+    lastTickAt: null
   };
 }
 

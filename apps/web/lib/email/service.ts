@@ -14,10 +14,17 @@ import type { EmailProvider } from "./types";
 import { getWebEnv } from "../env";
 
 function getProvider(): EmailProvider {
-  const { resendApiKey: apiKey, resendFromEmail } = getWebEnv();
+  const env = getWebEnv();
+  const { resendApiKey: apiKey, resendFromEmail, hasRealResend, nodeEnv } = env;
 
-  if (apiKey && !apiKey.startsWith("re_placeholder")) {
-    return new ResendEmailProvider(apiKey, resendFromEmail);
+  if (hasRealResend) {
+    return new ResendEmailProvider(apiKey as string, resendFromEmail);
+  }
+
+  if (nodeEnv === "production") {
+    throw new Error(
+      `Email sending is not fully configured for production. Check RESEND_API_KEY and RESEND_FROM_EMAIL (current sender: ${resendFromEmail}).`
+    );
   }
 
   return new MockEmailProvider();

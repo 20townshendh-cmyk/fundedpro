@@ -11,6 +11,16 @@ export function HomePlanComparison() {
   const defaultPlan = challengePlans.find((plan) => plan.featured) ?? challengePlans[1] ?? challengePlans[0];
   const [selectedPlanName, setSelectedPlanName] = useState(defaultPlan?.name);
   const selectedPlan = challengePlans.find((plan) => plan.name === selectedPlanName) ?? defaultPlan;
+  const mobileRules = [
+    { label: "Structure", evaluation: "1-step evaluation", funded: "Master account" },
+    { label: "Account size", evaluation: selectedPlan?.accountSize ?? "$100K", funded: selectedPlan?.accountSize ?? "$100K" },
+    { label: "Profit target", evaluation: "6% profit target", funded: "No fixed target after approval" },
+    { label: "Daily drawdown", evaluation: "2% daily drawdown", funded: "2% daily drawdown" },
+    { label: "Max drawdown", evaluation: "5% max drawdown", funded: "5% max drawdown" },
+    { label: "Trading days", evaluation: "Minimum 3 trading days", funded: "Minimum 3 trading days" },
+    { label: "Payout split", evaluation: "Inactive during evaluation", funded: "Up to 85%" },
+    { label: "Visibility", evaluation: "Targets, drawdown, and phase status", funded: "Payout holds, audits, and risk controls" }
+  ];
 
   useEffect(() => {
     const syncFromHash = () => {
@@ -58,6 +68,22 @@ export function HomePlanComparison() {
         {selectedPlan?.name === "Apex"
           ? "You can hold up to 5 active challenge accounts at once, but only 2 can be $600K accounts. If one fails, you can buy another."
           : "You can hold up to 5 active challenge accounts at once. Out of those 5, only 2 can be $600K accounts. Failed accounts free up a slot so you can buy another."}
+      </div>
+
+      <div className="evaluation-mobile-cards">
+        {mobileRules.map((rule) => (
+          <article key={rule.label} className="evaluation-mobile-card">
+            <strong>{rule.label}</strong>
+            <div>
+              <span>Evaluation</span>
+              <p>{rule.evaluation}</p>
+            </div>
+            <div>
+              <span>Funded</span>
+              <p>{rule.funded}</p>
+            </div>
+          </article>
+        ))}
       </div>
 
       <div className="evaluation-table-wrap">

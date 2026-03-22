@@ -2,7 +2,6 @@
 
 import { getDb } from "@fundedpro/db";
 import { ensureDemoTradingWorkspaceForTradingAccount, ensureDemoTradingWorkspaceForUser } from "./bootstrap";
-import { getDelayedSnapshot } from "./delayed-feed";
 import { advanceDemoMarket } from "./engine";
 
 type TerminalSearch = {
@@ -10,6 +9,34 @@ type TerminalSearch = {
   symbol?: string;
   tab?: string;
 };
+
+const LIVE_INGEST_FRESHNESS_MS = 3_000;
+
+function getSessionRegime(now = new Date()) {
+  const hour = now.getUTCHours();
+
+  if (hour >= 13 && hour < 21) {
+    return "US" as const;
+  }
+
+  if (hour >= 7 && hour < 13) {
+    return "LONDON" as const;
+  }
+
+  return "OVERNIGHT" as const;
+}
+
+function getFeedStatus(input: { latestSource: string | null; latestTickAt: Date | null }) {
+  if (input.latestSource === "ninjatrader" && input.latestTickAt && Date.now() - input.latestTickAt.getTime() <= LIVE_INGEST_FRESHNESS_MS) {
+    return "live" as const;
+  }
+
+  if (input.latestTickAt && Date.now() - input.latestTickAt.getTime() <= LIVE_INGEST_FRESHNESS_MS * 2) {
+    return "simulated" as const;
+  }
+
+  return "stale" as const;
+}
 
 async function resolveRequestedDemoAccountId(userId: string, accountId?: string) {
   if (!accountId) {
@@ -225,12 +252,14 @@ export async function getDemoTradingTerminal(userId: string, search?: TerminalSe
         instrumentId: string;
         symbol: string;
         name: string;
-      assetClass: string;
-      tickSize: string;
-      tickValue: string;
-      price: string | null;
-      changeAmount: string | null;
-      changePct: string | null;
+        assetClass: string;
+        tickSize: string;
+        tickValue: string;
+        price: string | null;
+        changeAmount: string | null;
+        changePct: string | null;
+        latestSource: string | null;
+        latestTickAt: Date | null;
       }>(
         `
           SELECT
@@ -242,11 +271,13 @@ export async function getDemoTradingTerminal(userId: string, search?: TerminalSe
             i."tickValue"::text,
             pt."price"::text,
             pt."changeAmount"::text,
-            pt."changePct"::text
+            pt."changePct"::text,
+            pt."source" AS "latestSource",
+            pt."createdAt" AS "latestTickAt"
           FROM "WatchlistItem" wi
           JOIN "Instrument" i ON i."id" = wi."instrumentId"
           LEFT JOIN LATERAL (
-            SELECT "price", "changeAmount", "changePct"
+            SELECT "price", "changeAmount", "changePct", "source", "createdAt"
             FROM "PriceTick"
             WHERE "instrumentId" = i."id"
             ORDER BY "createdAt" DESC
@@ -264,37 +295,20 @@ export async function getDemoTradingTerminal(userId: string, search?: TerminalSe
     watchlistItemsResult.rows[0] ??
     null;
 
-  const delayedSymbols = watchlistItemsResult.rows
-    .filter((item) => item.symbol === "ES" || item.symbol === "NQ")
-    .map((item) => item.symbol);
-  const delayedSnapshots = await Promise.all(delayedSymbols.map((symbol) => getDelayedSnapshot(symbol)));
-  const delayedMap = new Map(
-    delayedSnapshots
-      .filter((snapshot): snapshot is NonNullable<typeof snapshot> => Boolean(snapshot))
-      .map((snapshot) => [snapshot.symbol, snapshot])
-  );
-  const watchlistItems = watchlistItemsResult.rows.map((item) => {
-    const delayed = delayedMap.get(item.symbol);
-
-    if (!delayed) {
-      return item;
-    }
-
-    return {
-      ...item,
-      price: delayed.price.toFixed(2),
-      changeAmount: delayed.changeAmount.toFixed(2),
-      changePct: delayed.changePct.toFixed(2)
-    };
-  });
-  const selectedInstrumentWithDelayed =
-    watchlistItems.find((item) => item.symbol === selectedInstrument?.symbol) ??
-    selectedInstrument;
+  const watchlistItems = watchlistItemsResult.rows;
+  const selectedInstrumentWithDelayed = selectedInstrument;
   const executionInstrument = selectedInstrument;
-  const marketDataSource: "DELAYED_EXTERNAL" | "SIMULATED" =
-    selectedInstrumentWithDelayed && delayedMap.has(selectedInstrumentWithDelayed.symbol)
-      ? "DELAYED_EXTERNAL"
-      : "SIMULATED";
+  const hasFreshLiveIngest =
+    selectedInstrumentWithDelayed?.latestSource === "ninjatrader" &&
+    selectedInstrumentWithDelayed.latestTickAt != null &&
+    Date.now() - selectedInstrumentWithDelayed.latestTickAt.getTime() <= LIVE_INGEST_FRESHNESS_MS;
+  const marketDataSource: "LIVE_EXTERNAL" | "SIMULATED" = hasFreshLiveIngest ? "LIVE_EXTERNAL" : "SIMULATED";
+  const feedStatus = selectedInstrumentWithDelayed
+    ? getFeedStatus({
+        latestSource: selectedInstrumentWithDelayed.latestSource,
+        latestTickAt: selectedInstrumentWithDelayed.latestTickAt
+      })
+    : "stale";
 
   const [chartTicksResult, positionsResult, ordersResult, fillsResult, historyResult] = selectedInstrumentWithDelayed && activeAccount
     ? await Promise.all([
@@ -334,12 +348,14 @@ export async function getDemoTradingTerminal(userId: string, search?: TerminalSe
           type: string;
           status: string;
           quantity: number;
+          filledQuantity: number;
+          remainingQuantity: number;
           limitPrice: string | null;
           averageFillPrice: string | null;
           createdAt: Date;
         }>(
           `
-            SELECT o."id", i."symbol", o."side", o."type", o."status", o."quantity", o."limitPrice"::text, o."averageFillPrice"::text, o."createdAt"
+            SELECT o."id", i."symbol", o."side", o."type", o."status", o."quantity", o."filledQuantity", o."remainingQuantity", o."limitPrice"::text, o."averageFillPrice"::text, o."createdAt"
             FROM "DemoOrder" o
             JOIN "Instrument" i ON i."id" = o."instrumentId"
             WHERE o."demoAccountId" = $1
@@ -434,6 +450,10 @@ export async function getDemoTradingTerminal(userId: string, search?: TerminalSe
     selectedInstrument: selectedInstrumentWithDelayed,
     executionInstrument,
     marketDataSource,
+    feedStatus,
+    sessionRegime: getSessionRegime(),
+    feedFreshnessMs: LIVE_INGEST_FRESHNESS_MS,
+    lastTickAt: selectedInstrumentWithDelayed?.latestTickAt?.toISOString() ?? null,
     chartTicks: chartTicksResult.rows.slice().reverse(),
     positions: positionsResult.rows,
     orders: ordersResult.rows,

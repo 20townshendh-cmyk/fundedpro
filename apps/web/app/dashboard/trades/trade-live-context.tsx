@@ -43,13 +43,9 @@ export function TradeLiveProvider({ accountId, initialState, children }: TradeLi
   }, [initialState]);
 
   useEffect(() => {
-    if (!accountId) {
-      return;
-    }
-
     let cancelled = false;
     let inFlight = false;
-    const query = new URLSearchParams({ accountId });
+    let eventSource: EventSource | null = null;
 
     const refresh = async () => {
       if (inFlight) {
@@ -59,7 +55,10 @@ export function TradeLiveProvider({ accountId, initialState, children }: TradeLi
       inFlight = true;
 
       try {
-        const requestQuery = new URLSearchParams(query);
+        const requestQuery = new URLSearchParams();
+        if (accountId) {
+          requestQuery.set("accountId", accountId);
+        }
         requestQuery.set("_ts", String(Date.now()));
         const response = await fetch(`/api/demo-trading/live-state?${requestQuery.toString()}`, { cache: "no-store" });
         if (!response.ok || cancelled) {
@@ -75,11 +74,36 @@ export function TradeLiveProvider({ accountId, initialState, children }: TradeLi
       }
     };
 
-    void refresh();
-    const interval = window.setInterval(refresh, 400);
+    try {
+      const requestQuery = new URLSearchParams();
+      if (accountId) {
+        requestQuery.set("accountId", accountId);
+      }
+      eventSource = new EventSource(`/api/demo-trading/live-state/stream?${requestQuery.toString()}`);
+      eventSource.onmessage = (event) => {
+        const next = JSON.parse(event.data) as TradeLiveState;
+        if (!cancelled) {
+          setState(next);
+        }
+      };
+      eventSource.onerror = () => {
+        eventSource?.close();
+        eventSource = null;
+        void refresh();
+      };
+    } catch {
+      void refresh();
+    }
+
+    const interval = window.setInterval(() => {
+      if (!eventSource) {
+        void refresh();
+      }
+    }, 100);
 
     return () => {
       cancelled = true;
+      eventSource?.close();
       window.clearInterval(interval);
     };
   }, [accountId]);

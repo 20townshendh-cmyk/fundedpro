@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
+import { getDb } from "@fundedpro/db";
 import { getWebEnv } from "../../../../lib/env";
 import { ninjaTraderTickBatchSchema, persistNinjaTraderTicks } from "../../../../lib/market-data";
+
+const LIVE_INGEST_FRESHNESS_MS = 3_000;
 
 function isAuthorized(request: Request) {
   const token = getWebEnv().ninjaTraderIngestToken;
@@ -11,6 +14,51 @@ function isAuthorized(request: Request) {
 
   const authHeader = request.headers.get("authorization");
   return authHeader === `Bearer ${token}`;
+}
+
+export async function GET() {
+  const env = getWebEnv();
+
+  if (!env.ninjaTraderIngestToken) {
+    return NextResponse.json({
+      configured: false,
+      status: "missing-token"
+    });
+  }
+
+  const db = getDb();
+  const latestTicks = await db.query<{
+    symbol: string;
+    price: string;
+    source: string;
+    createdAt: Date;
+  }>(
+    `
+      SELECT DISTINCT ON (i."symbol")
+        i."symbol",
+        pt."price"::text AS "price",
+        pt."source",
+        pt."createdAt"
+      FROM "PriceTick" pt
+      JOIN "Instrument" i ON i."id" = pt."instrumentId"
+      WHERE i."symbol" IN ('ES', 'NQ')
+      ORDER BY i."symbol", pt."createdAt" DESC
+    `
+  );
+
+  return NextResponse.json({
+    configured: true,
+    status: latestTicks.rows.some((row) => Date.now() - row.createdAt.getTime() <= LIVE_INGEST_FRESHNESS_MS) ? "live" : "stale",
+    freshnessMs: LIVE_INGEST_FRESHNESS_MS,
+    symbols: latestTicks.rows.map((row) => ({
+      symbol: row.symbol,
+      price: row.price,
+      source: row.source,
+      createdAt: row.createdAt.toISOString(),
+      ageMs: Date.now() - row.createdAt.getTime(),
+      fresh: Date.now() - row.createdAt.getTime() <= LIVE_INGEST_FRESHNESS_MS
+    }))
+  });
 }
 
 export async function POST(request: Request) {

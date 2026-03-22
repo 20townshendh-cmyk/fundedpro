@@ -216,7 +216,7 @@ export const faqItems: FAQItem[] = [
   },
   {
     question: "What platform does FundedPro use for trading?",
-    answer: "FundedPro uses its internal Trade Now platform for challenge access, terminal login, position tracking, and customer-facing trading metrics."
+    answer: "FundedPro uses its internal Phynic platform for challenge access, terminal login, position tracking, and customer-facing trading metrics."
   },
   {
     question: "Are legal and compliance workflows complete?",

@@ -5,6 +5,7 @@ type WebEnv = {
   openAiApiKey: string | null;
   resendApiKey: string | null;
   resendFromEmail: string;
+  hasRealResend: boolean;
   googleClientId: string | null;
   googleClientSecret: string | null;
   stripeSecretKey: string | null;
@@ -16,6 +17,19 @@ type WebEnv = {
 };
 
 let cachedEnv: WebEnv | null = null;
+
+function isValidResendFromEmail(value: string) {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return false;
+  }
+
+  const namedAddressPattern = /^[^<>]+<[^<>\s@]+@[^<>\s@]+\.[^<>\s@]+>$/;
+  const plainAddressPattern = /^[^<>\s@]+@[^<>\s@]+\.[^<>\s@]+$/;
+
+  return namedAddressPattern.test(trimmed) || plainAddressPattern.test(trimmed);
+}
 
 function normalizeAppUrl(value: string | undefined) {
   const trimmed = value?.trim();
@@ -38,6 +52,12 @@ export function getWebEnv(): WebEnv {
   const openAiApiKey = process.env.OPENAI_API_KEY || null;
   const resendApiKey = process.env.RESEND_API_KEY || null;
   const resendFromEmail = process.env.RESEND_FROM_EMAIL || "FundedPro <onboarding@resend.dev>";
+  const normalizedFromEmail = resendFromEmail.toLowerCase();
+  const hasRealResend =
+    !!resendApiKey &&
+    !resendApiKey.startsWith("re_placeholder") &&
+    !normalizedFromEmail.includes("@resend.dev") &&
+    isValidResendFromEmail(resendFromEmail);
   const googleClientId = process.env.GOOGLE_CLIENT_ID || null;
   const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET || null;
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY || null;
@@ -57,6 +77,7 @@ export function getWebEnv(): WebEnv {
     openAiApiKey,
     resendApiKey,
     resendFromEmail,
+    hasRealResend,
     googleClientId,
     googleClientSecret,
     stripeSecretKey,
