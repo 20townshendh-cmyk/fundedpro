@@ -42,6 +42,7 @@ export function LiveChart({ symbol, initialCandles, lastPrice, change, linkedSym
   const [currentPrice, setCurrentPrice] = useState(lastPrice);
   const [currentChange, setCurrentChange] = useState(change);
   const [isLoading, setIsLoading] = useState(false);
+  const [feedBadge, setFeedBadge] = useState<"live" | "simulated" | "delayed" | "loading">("loading");
 
   function normalizeCandles(candles: DemoCandle[]) {
     return [...candles]
@@ -192,7 +193,12 @@ export function LiveChart({ symbol, initialCandles, lastPrice, change, linkedSym
           return;
         }
 
-        const data = await response.json() as { candles: DemoCandle[]; lastPrice: number };
+        const data = await response.json() as {
+          candles: DemoCandle[];
+          lastPrice: number;
+          source: "INTERNAL" | "DELAYED_EXTERNAL" | "EMPTY";
+          tickSource: "ninjatrader" | "simulated" | null;
+        };
 
         if (cancelled || !seriesRef.current) {
           return;
@@ -202,6 +208,13 @@ export function LiveChart({ symbol, initialCandles, lastPrice, change, linkedSym
         setCurrentChange(data.lastPrice - currentPriceRef.current);
         currentPriceRef.current = data.lastPrice;
         setCurrentPrice(data.lastPrice);
+        setFeedBadge(
+          data.source === "DELAYED_EXTERNAL"
+            ? "delayed"
+            : data.tickSource === "ninjatrader"
+              ? "live"
+              : "simulated"
+        );
       } finally {
         inFlight = false;
         if (!cancelled) {
@@ -211,7 +224,7 @@ export function LiveChart({ symbol, initialCandles, lastPrice, change, linkedSym
         if (!cancelled) {
           timeoutId = window.setTimeout(() => {
             void refresh();
-          }, 500);
+          }, 250);
         }
       }
     }
@@ -271,6 +284,9 @@ export function LiveChart({ symbol, initialCandles, lastPrice, change, linkedSym
         </div>
         <div className="trade-chart-live-price">
           {isLoading ? <span className="trade-data-badge delayed">Loading</span> : null}
+          {!isLoading && feedBadge === "live" ? <span className="trade-data-badge live">Live Ticks</span> : null}
+          {!isLoading && feedBadge === "simulated" ? <span className="trade-data-badge simulated">Simulated Live</span> : null}
+          {!isLoading && feedBadge === "delayed" ? <span className="trade-data-badge delayed">Delayed Fallback</span> : null}
           <strong>{currentPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
           <span className={currentChange >= 0 ? "positive" : "negative"}>
             {currentChange.toLocaleString("en-US", { signDisplay: "always", minimumFractionDigits: 2, maximumFractionDigits: 2 })}
