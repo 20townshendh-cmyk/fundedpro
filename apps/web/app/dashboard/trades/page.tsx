@@ -507,60 +507,6 @@ export default async function TradeNowPage({ searchParams }: TradeNowPageProps) 
   }
 
   const errorMessage = filters.error ? messages.error[filters.error as keyof typeof messages.error] ?? "Action failed." : null;
-  const loginErrorMessage = filters.error === "terminal-login" ? errorMessage : null;
-
-  if (!hasTerminalAccess) {
-    const db = getDb();
-    const userAccounts = await db.query<{ id: string }>(
-      `
-        SELECT "id"
-        FROM "TradingAccount"
-        WHERE "userId" = $1
-        LIMIT 1
-      `,
-      [session.userId]
-    );
-
-    if (userAccounts.rowCount) {
-      return (
-      <SiteShell>
-        <main className="trade-terminal-login-shell">
-          <section className="trade-terminal-login-card">
-            <div className="trade-terminal-login-brand">
-              <span className="trade-terminal-login-mark" />
-              <strong>fundedpro terminal</strong>
-            </div>
-            <p className="trade-terminal-login-copy">Use the trading login and password from your account-ready email or the account detail page. This screen does not use your main FundedPro website password.</p>
-            {loginErrorMessage ? <div className="trade-terminal-login-error">{loginErrorMessage}</div> : null}
-            <form action={unlockDemoTerminalAction} className="trade-terminal-login-form">
-              <input type="hidden" name="accountId" value={filters.accountId ?? ""} />
-              <input type="hidden" name="symbol" value={filters.symbol ?? ""} />
-              <input type="hidden" name="tab" value={filters.tab ?? ""} />
-              <input type="hidden" name="timeframe" value={filters.timeframe ?? ""} />
-              <input type="hidden" name="layout" value={filters.layout ?? ""} />
-              <label>
-                <span>Login</span>
-                <input name="username" type="text" placeholder={session.email} autoComplete="username" defaultValue={rememberedTerminal?.login ?? ""} />
-              </label>
-              <label>
-                <span>Password</span>
-                <input name="password" type="password" placeholder="Enter password" autoComplete="current-password" defaultValue={rememberedTerminal?.password ?? ""} />
-              </label>
-              <label>
-                <input name="rememberMe" type="checkbox" defaultChecked={Boolean(rememberedTerminal)} />
-                <span>Remember me</span>
-              </label>
-              <button type="submit" className="trade-terminal-login-submit">Login</button>
-            </form>
-            <div className="trade-terminal-login-help">
-              <a href="/dashboard">Back to dashboard</a>
-            </div>
-          </section>
-        </main>
-      </SiteShell>
-      );
-    }
-  }
 
   const terminal = await getDemoTradingTerminal(session.userId, filters);
   const accountQuery = filters.accountId ? `accountId=${encodeURIComponent(filters.accountId)}&` : "";
