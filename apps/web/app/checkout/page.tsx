@@ -152,7 +152,7 @@ export default async function CheckoutLandingPage({ searchParams }: CheckoutPage
                     <div>
                       <strong>{plan.accountSize.toLocaleString("en-GB", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}</strong>
                       <p>{plan.name}</p>
-                      <span>{minTradingDays} day minimum</span>
+                      <span>{plan.minTradingDays} day minimum</span>
                       <div className="checkout-option-price-line">
                         <span className="checkout-original-price">{formatUsd(plan.priceCents)}</span>
                         <strong>{formatUsd(discountedPriceCents)}</strong>

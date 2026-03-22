@@ -91,7 +91,7 @@ export default function HomePage() {
         <MarketingSection
           eyebrow="How it works"
           title="A clean path from purchase to funded progression"
-          description="The product is designed to remove operational guesswork while keeping the standards high."
+          description="Every step is designed to remove operational guesswork while keeping the standards high."
         >
           <FeatureGrid items={howItWorksSteps} />
         </MarketingSection>
@@ -99,14 +99,14 @@ export default function HomePage() {
         <MarketingSection
           eyebrow="Why FundedPro"
           title="Premium trader experience with firm-grade operational visibility"
-          description="The public site, trader dashboard, and admin workflows are being built as one connected system instead of disconnected tools."
+          description="The public site, trader dashboard, and admin workflows operate as one connected prop-firm system instead of disconnected tools."
         >
           <FeatureGrid items={whyFundedProFeatures} />
         </MarketingSection>
 
         <CTASection
           title="Built to convert evaluation buyers and support them after checkout"
-          description="FundedPro is being shaped as a full prop-firm product, not just a landing page with a payment button."
+          description="FundedPro is a full prop-firm product, not just a landing page with a payment button."
           primary={{ href: "/signup", label: "Create your account" }}
           secondary={{ href: "/challenges", label: "Compare challenges" }}
         />
