@@ -142,6 +142,8 @@ async function submitDemoOrder(formData: FormData, sessionUserId: string) {
           ? "market-closed" as const
           : error instanceof Error && error.message === "ACCOUNT_BREACHED"
             ? "account-breached" as const
+            : error instanceof Error && error.message === "PRICE_STALE"
+              ? "price-stale" as const
             : "order-rejected" as const,
       params: {
         symbol: data.symbol,

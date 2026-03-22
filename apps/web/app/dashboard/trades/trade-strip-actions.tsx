@@ -62,6 +62,8 @@ export function TradeStripActions({
             ? "Market is closed for this instrument right now."
             : result.error === "account-breached"
               ? "Account breached. New trade entry is disabled."
+              : result.error === "price-stale"
+                ? "Execution price is stale. Wait for a fresh tick before sending a market order."
               : "Order was rejected. Check buying power and inputs."
         );
       }
@@ -83,8 +85,8 @@ export function TradeStripActions({
         <small>Max {maxAllowed.toLocaleString("en-US")}</small>
         <small className={marketDataSource === "LIVE_EXTERNAL" ? "positive" : ""}>
           {marketDataSource === "LIVE_EXTERNAL"
-            ? "Live external ticks are active for this symbol."
-            : "Orders submit against the current Trade Now simulated live feed."}
+            ? "Fresh external ticks are active. Market buys cross the ask and sells cross the bid."
+            : "Orders submit against the current Trade Now simulated live feed with spread-aware execution."}
         </small>
       </div>
       <div className="trade-strip-presets">

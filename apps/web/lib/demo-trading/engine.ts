@@ -40,6 +40,8 @@ type InstrumentMeta = {
   tickSize: string;
   tickValue: string;
   latestPrice: string;
+  latestCreatedAt: Date | null;
+  latestSource: string | null;
 };
 
 function roundToTick(price: number, tickSize: number) {
@@ -52,6 +54,18 @@ function getPointValue(tickSize: number, tickValue: number) {
 
 function getMarginRequirement(price: number, quantity: number, tickSize: number, tickValue: number) {
   return Number((price * getPointValue(tickSize, tickValue) * quantity * MARGIN_RATE).toFixed(2));
+}
+
+function getMarketExecutionPrice(input: {
+  side: "BUY" | "SELL";
+  lastPrice: number;
+  tickSize: number;
+}) {
+  const crossedPrice = input.side === "BUY"
+    ? input.lastPrice + input.tickSize
+    : input.lastPrice - input.tickSize;
+
+  return roundToTick(crossedPrice, input.tickSize);
 }
 
 function getRealizedPnl(input: {
@@ -433,7 +447,9 @@ async function getLatestInstrumentMap(client: PoolClient) {
       symbol: row.symbol,
       tickSize: row.tickSize,
       tickValue: row.tickValue,
-      latestPrice: row.latestPrice ?? row.defaultPrice
+      latestPrice: row.latestPrice ?? row.defaultPrice,
+      latestCreatedAt: row.latestCreatedAt,
+      latestSource: row.latestSource
     }
   ]));
 }
@@ -590,10 +606,12 @@ export async function placeDemoOrder(input: {
             i."symbol",
             i."tickSize"::text,
             i."tickValue"::text,
-            COALESCE(pt."price"::text, i."defaultPrice"::text) AS "latestPrice"
+            COALESCE(pt."price"::text, i."defaultPrice"::text) AS "latestPrice",
+            pt."createdAt" AS "latestCreatedAt",
+            pt."source" AS "latestSource"
           FROM "Instrument" i
           LEFT JOIN LATERAL (
-            SELECT "price"
+            SELECT "price", "createdAt", "source"
             FROM "PriceTick"
             WHERE "instrumentId" = i."id"
             ORDER BY "createdAt" DESC
@@ -641,6 +659,15 @@ export async function placeDemoOrder(input: {
 
     assertDemoInstrumentMarketOpen(instrument.symbol);
 
+      const latestTickAgeMs = instrument.latestCreatedAt
+        ? Date.now() - instrument.latestCreatedAt.getTime()
+        : Number.POSITIVE_INFINITY;
+      const hasFreshExecutionPrice = latestTickAgeMs <= LIVE_INGEST_FRESHNESS_MS * 2;
+
+      if (input.type === "MARKET" && !hasFreshExecutionPrice) {
+        throw new Error("PRICE_STALE");
+      }
+
       const maxContracts = getMaxContractsForBalance(Number(account.startingBalance));
       const openContracts = Number(exposureResult.rows[0]?.openContracts ?? 0);
       const existingPosition = existingPositionResult.rows[0];
@@ -657,7 +684,13 @@ export async function placeDemoOrder(input: {
       throw new Error("Order exceeds max contracts for account size.");
     }
 
-      const referencePrice = input.type === "LIMIT" ? Number(input.limitPrice) : Number(instrument.latestPrice);
+      const tickSize = Number(instrument.tickSize);
+      const marketExecutionPrice = getMarketExecutionPrice({
+        side: input.side,
+        lastPrice: Number(instrument.latestPrice),
+        tickSize
+      });
+      const referencePrice = input.type === "LIMIT" ? Number(input.limitPrice) : marketExecutionPrice;
       const marginRequired = getMarginRequirement(referencePrice, increasingOppositeExposure, Number(instrument.tickSize), Number(instrument.tickValue));
 
       if (increasingOppositeExposure > 0 && marginRequired > Number(account.buyingPower)) {
@@ -683,7 +716,7 @@ export async function placeDemoOrder(input: {
         input.type,
         input.quantity,
         input.limitPrice ?? null,
-        instrument.latestPrice
+        input.type === "MARKET" ? marketExecutionPrice : instrument.latestPrice
       ]
     );
 
@@ -696,7 +729,7 @@ export async function placeDemoOrder(input: {
       orderId
     });
 
-    const marketPrice = Number(instrument.latestPrice);
+    const marketPrice = marketExecutionPrice;
     const shouldFillImmediately =
       input.type === "MARKET" ||
       (input.side === "BUY" && input.limitPrice != null && marketPrice <= input.limitPrice) ||
