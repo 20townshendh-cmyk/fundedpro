@@ -126,6 +126,10 @@ export default async function PayoutsPage() {
     });
   const latestCertifiedPayout = payouts.rows.find((payout) => ["APPROVED", "PAID"].includes(payout.status)) ?? null;
 
+  if (!accountResult.rows.length) {
+    redirect("/dashboard");
+  }
+
   return (
     <SiteShell>
       <TopNav />
