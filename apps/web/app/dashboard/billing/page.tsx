@@ -3,9 +3,143 @@ import { getDb } from "@fundedpro/db";
 import { Footer, SiteShell, TopNav } from "@fundedpro/ui";
 import { getSession, logoutAction } from "../../../lib/auth";
 import { startChallengeCheckoutAction } from "../../../lib/trader";
+import { showcaseWorkspace } from "../../../lib/showcase-workspace";
 
 function formatUsd(cents: number) {
   return (cents / 100).toLocaleString("en-GB", { style: "currency", currency: "USD" });
+}
+
+function renderShowcaseBilling(session: Awaited<ReturnType<typeof getSession>>) {
+  const invoices = showcaseWorkspace.invoices;
+  const paidTotal = invoices.reduce((sum, invoice) => sum + Math.round(Number(invoice.amount.replace(/[$,]/g, "")) * 100), 0);
+
+  return (
+    <SiteShell>
+      <TopNav />
+      <main className="dashboard-shell">
+        <aside className="dashboard-sidebar">
+          <div className="sidebar-brand">
+            <p className="eyebrow">Trader workspace</p>
+            <h2 className="sidebar-title">FundedPro</h2>
+            <p className="surface-copy">Billing visibility for challenge purchases, invoices, and account-related charges.</p>
+          </div>
+          <nav className="sidebar-nav">
+            <a className="sidebar-link sidebar-link-gold" href="/checkout">New Challenge</a>
+            <a className="sidebar-link" href="/dashboard/trades">Trade Now</a>
+            <a className="sidebar-link" href="/dashboard">Overview</a>
+            <a className="sidebar-link" href="/dashboard/account">Account detail</a>
+            <a className="sidebar-link" href="/dashboard/trades?tab=history">Trade history</a>
+            <a className="sidebar-link active" href="/dashboard/billing">Billing</a>
+            <a className="sidebar-link" href="/dashboard/payouts">Payouts</a>
+            <a className="sidebar-link" href="/dashboard/support">Support</a>
+            <a className="sidebar-link" href="/login">Switch account</a>
+            {session?.role === "ADMIN" ? <a className="sidebar-link" href="/admin">Admin panel</a> : null}
+          </nav>
+          <form action={logoutAction}>
+            <button className="ghost-button" type="submit">Log out</button>
+          </form>
+        </aside>
+
+        <section className="dashboard-main account-page">
+          <section className="dashboard-hero">
+            <div className="hero-stack">
+              <div>
+                <p className="eyebrow">Billing</p>
+                <h1 className="page-title">Invoices and challenge purchase history</h1>
+                <p className="page-copy">This showcase billing view mirrors the premium invoice presentation used in the designed demo workspace.</p>
+              </div>
+              <div className="hero-inline-metrics">
+                <article className="inline-metric">
+                  <span>Invoices</span>
+                  <strong>{invoices.length}</strong>
+                </article>
+                <article className="inline-metric">
+                  <span>Paid total</span>
+                  <strong>{formatUsd(paidTotal)}</strong>
+                </article>
+                <article className="inline-metric">
+                  <span>Latest state</span>
+                  <strong>{invoices[0]?.status ?? "PAID"}</strong>
+                </article>
+                <article className="inline-metric">
+                  <span>Trading accounts</span>
+                  <strong>1</strong>
+                </article>
+              </div>
+            </div>
+
+            <div className="surface-card callout-card spotlight-card">
+              <div className="spotlight-head">
+                <span className="muted-label">Latest invoice</span>
+                <span className="status-pill">{invoices[0]?.status ?? "PAID"}</span>
+              </div>
+              <strong className="spotlight-value">{invoices[0]?.reference ?? "INV-20481"}</strong>
+              <p className="surface-copy">Preview invoice records stay linked to the demo workspace until a live order is created.</p>
+              <div className="spotlight-grid">
+                <div>
+                  <span className="muted-label">Amount</span>
+                  <strong>{invoices[0]?.amount ?? "$210"}</strong>
+                </div>
+                <div>
+                  <span className="muted-label">Records</span>
+                  <strong>{invoices.length}</strong>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="dashboard-grid trader-summary-grid">
+            <article className="surface-card metric-panel">
+              <span className="muted-label">Billing state</span>
+              <strong className="metric-value">Current</strong>
+              <p className="surface-copy">Challenge purchase receipts and invoice history remain attached to the trader workspace.</p>
+            </article>
+            <article className="surface-card metric-panel">
+              <span className="muted-label">Paid invoices</span>
+              <strong className="metric-value">{invoices.length}</strong>
+              <p className="surface-copy">Completed payments confirmed by the showcase ledger.</p>
+            </article>
+            <article className="surface-card metric-panel">
+              <span className="muted-label">Open issues</span>
+              <strong className="metric-value">0</strong>
+              <p className="surface-copy">No support follow-up is required in the preview billing state.</p>
+            </article>
+            <article className="surface-card metric-panel">
+              <span className="muted-label">Latest login</span>
+              <strong className="metric-value">#{showcaseWorkspace.login}</strong>
+              <p className="surface-copy">Each paid order provisions a dedicated trading login for the funded workspace.</p>
+            </article>
+          </section>
+
+          <section className="table-card">
+            <div className="table-wrap">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Reference</th>
+                    <th>Status</th>
+                    <th>Amount</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {invoices.map((invoice) => (
+                    <tr key={invoice.reference}>
+                      <td>{invoice.reference}</td>
+                      <td>{invoice.status}</td>
+                      <td>{invoice.amount}</td>
+                      <td>{invoice.date}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+      </main>
+      <Footer />
+    </SiteShell>
+  );
 }
 
 export default async function BillingPage() {
@@ -79,6 +213,10 @@ export default async function BillingPage() {
     )
   ]);
   const summary = accountSummary.rows[0] ?? { totalAccounts: "0", latestLogin: null };
+
+  if (!invoices.rows.length && !orderHistory.rows.length && !Number(summary.totalAccounts)) {
+    return renderShowcaseBilling(session);
+  }
 
   return (
     <SiteShell>

@@ -5,9 +5,95 @@ import { Footer, SiteShell, TopNav } from "@fundedpro/ui";
 import { getSession, logoutAction } from "../../../lib/auth";
 import { syncUserTradingAccountsFromDemo } from "../../../lib/internal-trading-sync";
 import { RequestRewardDialog } from "./request-reward-dialog";
+import { showcaseWorkspace } from "../../../lib/showcase-workspace";
 
 function formatUsd(cents: number) {
   return (cents / 100).toLocaleString("en-GB", { style: "currency", currency: "USD" });
+}
+
+function renderShowcasePayouts(session: Awaited<ReturnType<typeof getSession>>) {
+  const latestPayout = showcaseWorkspace.payouts[0];
+
+  return (
+    <SiteShell>
+      <TopNav />
+      <main className="dashboard-shell">
+        <aside className="dashboard-sidebar">
+          <div className="sidebar-brand">
+            <p className="eyebrow">Trader workspace</p>
+            <h2 className="sidebar-title">FundedPro</h2>
+            <p className="surface-copy">Monitor payout readiness without blurring the line between evaluation tracking and real-money eligibility.</p>
+          </div>
+          <nav className="sidebar-nav">
+            <a className="sidebar-link sidebar-link-gold" href="/checkout">New Challenge</a>
+            <a className="sidebar-link" href="/dashboard/trades">Trade Now</a>
+            <a className="sidebar-link" href="/dashboard">Overview</a>
+            <a className="sidebar-link" href="/dashboard/account">Account detail</a>
+            <a className="sidebar-link" href="/dashboard/trades?tab=history">Trade history</a>
+            <a className="sidebar-link" href="/dashboard/billing">Billing</a>
+            <a className="sidebar-link active" href="/dashboard/payouts">Payouts</a>
+            <a className="sidebar-link" href="/dashboard/support">Support</a>
+            <a className="sidebar-link" href="/login">Switch account</a>
+            {session?.role === "ADMIN" ? <a className="sidebar-link" href="/admin">Admin panel</a> : null}
+          </nav>
+          <form action={logoutAction}>
+            <button className="ghost-button" type="submit">Log out</button>
+          </form>
+        </aside>
+
+        <section className="dashboard-main account-page">
+          <section className="payouts-simple-header">
+            <div>
+              <p className="eyebrow">Rewards</p>
+              <h1 className="page-title payouts-simple-title">Rewards</h1>
+            </div>
+          </section>
+
+          <section className="payouts-simple-grid">
+            <article className="surface-card payouts-simple-card payouts-certificate-card">
+              <div className="payouts-empty-badge" aria-hidden="true">FP</div>
+              <strong>Reward Certificate Ready</strong>
+              <p className="surface-copy">The designed workspace includes a premium certificate presentation once reward review is approved.</p>
+              <p className="surface-copy">Your live account will replace this showcase row after the first eligible payout request.</p>
+              <a className="ghost-button" href="/checkout">Unlock live rewards</a>
+            </article>
+
+            <article className="surface-card payouts-simple-card payouts-request-card">
+              <strong>Ready to request your reward?</strong>
+              <p className="surface-copy">Showcase mode keeps the full payout design visible, but real requests unlock only after your first funded account reaches eligibility.</p>
+              <a className="ghost-button" href="/checkout">Buy challenge</a>
+            </article>
+          </section>
+
+          <section className="payouts-table-shell">
+            <div className="payouts-table-head">
+              <span>Reference ID</span>
+              <span>Reward Type</span>
+              <span>Requested On</span>
+              <span>Method</span>
+              <span>Status</span>
+              <span>Amount</span>
+              <span>Certificate</span>
+              <span>Invoice</span>
+            </div>
+            <div className="payouts-table-body">
+              <article className="payouts-table-row">
+                <span>{latestPayout.reference}</span>
+                <span>{latestPayout.type}</span>
+                <span>{latestPayout.requestedOn}</span>
+                <span>{latestPayout.method}</span>
+                <span>{latestPayout.status}</span>
+                <span>{latestPayout.amount}</span>
+                <span>{latestPayout.certificate}</span>
+                <span>{latestPayout.invoice}</span>
+              </article>
+            </div>
+          </section>
+        </section>
+      </main>
+      <Footer />
+    </SiteShell>
+  );
 }
 
 export default async function PayoutsPage() {
@@ -56,6 +142,10 @@ export default async function PayoutsPage() {
       [session.userId]
     )
   ]);
+
+  if (!accountResult.rows.length && !payouts.rows.length) {
+    return renderShowcasePayouts(session);
+  }
 
   const account = accountResult.rows[0];
   const fundedEligible = account?.accountState === "FUNDED";

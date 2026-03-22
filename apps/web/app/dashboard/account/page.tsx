@@ -6,6 +6,7 @@ import { FlashToast } from "../../components/flash-toast";
 import { getSession, logoutAction } from "../../../lib/auth";
 import { getInternalTradingSnapshot, syncUserTradingAccountsFromDemo } from "../../../lib/internal-trading-sync";
 import { decryptTradingPassword } from "../../../lib/trading-credentials";
+import { showcaseWorkspace } from "../../../lib/showcase-workspace";
 
 export const dynamic = "force-dynamic";
 
@@ -93,6 +94,215 @@ function getDisplayState(account: {
   return "EVALUATION";
 }
 
+function renderShowcaseAccountDetail(session: Awaited<ReturnType<typeof getSession>>, displayName: string) {
+  const account = showcaseWorkspace;
+
+  return (
+    <SiteShell>
+      <TopNav />
+      <main className="dashboard-shell">
+        <aside className="dashboard-sidebar">
+          <nav className="sidebar-nav">
+            <a className="sidebar-link sidebar-link-gold" href="/checkout">New Challenge</a>
+            <a className="sidebar-link" href="/dashboard/trades">Trade Now</a>
+            <a className="sidebar-link" href="/dashboard">Overview</a>
+            <a className="sidebar-link active" href="/dashboard/account">Account detail</a>
+            <a className="sidebar-link" href="/dashboard/trades?tab=history">Trade history</a>
+            <a className="sidebar-link" href="/dashboard/billing">Billing</a>
+            <a className="sidebar-link" href="/dashboard/payouts">Payouts</a>
+            <a className="sidebar-link" href="/dashboard/support">Support</a>
+            <a className="sidebar-link" href="/login">Switch account</a>
+            {session?.role === "ADMIN" ? <a className="sidebar-link" href="/admin">Admin panel</a> : null}
+          </nav>
+          <form action={logoutAction}>
+            <button className="ghost-button" type="submit">Log out</button>
+          </form>
+        </aside>
+
+        <section className="dashboard-main account-page account-page-fixed">
+          <section className="account-browser">
+            <div className="account-browser-list">
+              <div className="account-browser-header">
+                <a href="/checkout" className="account-browser-buy">Buy Challenge</a>
+              </div>
+              <div className="account-browser-filters">
+                <span className="account-browser-filter">One Step</span>
+                <span className="account-browser-filter">Ongoing</span>
+                <span className="account-browser-filter">Showcase</span>
+              </div>
+              <div className="account-browser-cards">
+                <a href="/dashboard/account" className="account-browser-card active">
+                  <div className="account-browser-card-head">
+                    <div className="account-browser-card-title">
+                      <span className="account-browser-card-icon" aria-hidden="true" />
+                      <strong>#{account.login}</strong>
+                    </div>
+                    <div className="account-browser-card-actions">
+                      <span className="account-browser-state active">Ongoing</span>
+                      <span className="account-browser-more" aria-hidden="true">...</span>
+                    </div>
+                  </div>
+                  <p className="account-browser-meta">
+                    {formatUsd(account.accountSize).replace(".00", "")} <span>&bull;</span> One Step <span>&bull;</span> Practitioner
+                  </p>
+                  <div className="account-browser-grid">
+                    <div>
+                      <span>Balance</span>
+                      <strong>{formatUsd(account.balance)}</strong>
+                    </div>
+                    <div>
+                      <span>Profit Target (8%)</span>
+                      <strong>{account.progressPct}%</strong>
+                    </div>
+                    <div>
+                      <span>P&amp;L</span>
+                      <strong className="positive">+{formatUsd(account.pnl)}</strong>
+                    </div>
+                    <div>
+                      <span>Profit %</span>
+                      <strong className="positive">+4.4%</strong>
+                    </div>
+                  </div>
+                  <div className="account-browser-progress">
+                    <span style={{ width: `${account.progressPct}%` }} />
+                  </div>
+                </a>
+              </div>
+            </div>
+
+            <div className="account-browser-detail">
+              <div className="account-detail-panel">
+                <div className="account-detail-top">
+                  <div>
+                    <p className="eyebrow">Account detail</p>
+                    <h2 className="page-title account-detail-title">#{account.login}</h2>
+                    <p className="page-copy">The showcase workspace mirrors the designed FundedPro account detail experience until your first live challenge provisions a real account.</p>
+                  </div>
+                  <div className="account-detail-top-actions">
+                    <span className="account-browser-state active">Showcase</span>
+                  </div>
+                </div>
+
+                <div className="account-detail-metrics">
+                  <article className="surface-card metric-panel">
+                    <span className="muted-label">Trader</span>
+                    <strong className="metric-value">{displayName}</strong>
+                    <p className="surface-copy">Preview workspace owner</p>
+                  </article>
+                  <article className="surface-card metric-panel">
+                    <span className="muted-label">Balance</span>
+                    <strong className="metric-value">{formatUsd(account.balance)}</strong>
+                    <p className="surface-copy">Equity {formatUsd(account.equity)}</p>
+                  </article>
+                  <article className="surface-card metric-panel">
+                    <span className="muted-label">Total Reward</span>
+                    <strong className="metric-value">{formatUsd(account.totalRewardCents / 100)}</strong>
+                    <p className="surface-copy">{account.rewardCount} certificates unlocked</p>
+                  </article>
+                </div>
+
+                <section className="account-section">
+                  <div className="detail-head">
+                    <div>
+                      <span className="muted-label">Trading objectives</span>
+                      <strong className="metric-value">Rule progress</strong>
+                    </div>
+                  </div>
+                  <div className="account-objective-list">
+                    <article className="surface-card account-objective-card">
+                      <div className="account-objective-head"><strong>Minimum Trading Days</strong><span>Progress: 100.00%</span></div>
+                      <p>5 of 5 trading days completed</p>
+                      <div className="progress-track"><span className="progress-fill" style={{ width: "100%" }} /></div>
+                    </article>
+                    <article className="surface-card account-objective-card">
+                      <div className="account-objective-head"><strong>Maximum Daily Loss</strong><span>Remaining: {formatUsd(3200)}</span></div>
+                      <p>Maximum allowed daily loss: {formatUsd(4000)}</p>
+                      <div className="progress-track"><span className="progress-fill" style={{ width: "80%" }} /></div>
+                    </article>
+                    <article className="surface-card account-objective-card">
+                      <div className="account-objective-head"><strong>Maximum Loss</strong><span>Remaining: {formatUsd(7600)}</span></div>
+                      <p>Maximum allowed loss: {formatUsd(10000)}</p>
+                      <div className="progress-track"><span className="progress-fill" style={{ width: "76%" }} /></div>
+                    </article>
+                    <article className="surface-card account-objective-card">
+                      <div className="account-objective-head"><strong>Profit Target</strong><span>{formatUsd(account.pnl)} of {formatUsd(8000)}</span></div>
+                      <p>Track progress toward the active profit objective.</p>
+                      <div className="progress-track"><span className="progress-fill" style={{ width: `${account.progressPct}%` }} /></div>
+                    </article>
+                  </div>
+                </section>
+
+                <section className="account-detail-metrics four-up">
+                  <article className="surface-card metric-panel">
+                    <span className="muted-label">Win rate</span>
+                    <strong className="metric-value">{formatPct(account.winRate)}</strong>
+                  </article>
+                  <article className="surface-card metric-panel">
+                    <span className="muted-label">Average hold</span>
+                    <strong className="metric-value">{Math.round(account.avgHoldingMinutes)}m</strong>
+                  </article>
+                  <article className="surface-card metric-panel">
+                    <span className="muted-label">Won trades</span>
+                    <strong className="metric-value positive">{account.wonTrades}</strong>
+                  </article>
+                  <article className="surface-card metric-panel">
+                    <span className="muted-label">Lost trades</span>
+                    <strong className="metric-value">{account.lostTrades}</strong>
+                  </article>
+                </section>
+
+                <section className="account-detail-grid wide-gap">
+                  <article className="table-card">
+                    <div className="table-wrap">
+                      <table className="admin-table">
+                        <thead>
+                          <tr>
+                            <th>Symbol</th>
+                            <th>Side</th>
+                            <th>Open</th>
+                            <th>Close</th>
+                            <th>Realized</th>
+                            <th>Closed</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {account.closedTrades.map((trade, index) => (
+                            <tr key={`${trade.symbol}-${index}`}>
+                              <td>{trade.symbol}</td>
+                              <td>{trade.side}</td>
+                              <td>{trade.openPrice}</td>
+                              <td>{trade.closePrice}</td>
+                              <td>{trade.realized}</td>
+                              <td>{trade.closed}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </article>
+                  <article className="surface-card emphasis-card">
+                    <span className="muted-label">Open positions</span>
+                    <div className="session-table">
+                      {account.positions.map((position) => (
+                        <div className="session-row" key={position.symbol}>
+                          <span>{position.symbol}</span>
+                          <strong>{position.pnl}</strong>
+                          <span>{position.detail}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </article>
+                </section>
+              </div>
+            </div>
+          </section>
+        </section>
+      </main>
+      <Footer />
+    </SiteShell>
+  );
+}
+
 type AccountPageProps = {
   searchParams: Promise<{ accountId?: string; provisioned?: string }>;
 };
@@ -164,6 +374,10 @@ export default async function AccountDetailPage({ searchParams }: AccountPagePro
 
   if (!user) {
     redirect("/login");
+  }
+
+  if (!accountResult.rows.length && !plan) {
+    return renderShowcaseAccountDetail(session, getDisplayName(user.fullName, session.email));
   }
 
   const accounts = accountResult.rows.map((account) => {

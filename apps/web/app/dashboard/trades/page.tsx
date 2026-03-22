@@ -1,8 +1,8 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getDb } from "@fundedpro/db";
-import { SiteShell } from "@fundedpro/ui";
-import { getSession } from "../../../lib/auth";
+import { Footer, SiteShell, TopNav } from "@fundedpro/ui";
+import { getSession, logoutAction } from "../../../lib/auth";
 import {
   cancelDemoOrderAction,
   createDemoAccountAction,
@@ -23,6 +23,7 @@ import { TradeAutoRefresh } from "./trade-auto-refresh";
 import { TradeLiveProvider } from "./trade-live-context";
 import { TradeStripActions } from "./trade-strip-actions";
 import { TradeTerminalControls } from "./trade-terminal-controls";
+import { showcaseWorkspace } from "../../../lib/showcase-workspace";
 
 export const dynamic = "force-dynamic";
 
@@ -107,6 +108,227 @@ function renderEmptyTradeNowState() {
   );
 }
 
+function renderShowcaseTradeWorkspace(session: Awaited<ReturnType<typeof getSession>>, tab: string | undefined) {
+  const account = showcaseWorkspace;
+  const isHistoryTab = tab === "history";
+
+  return (
+    <SiteShell>
+      <TopNav />
+      <main className="dashboard-shell">
+        <aside className="dashboard-sidebar">
+          <div className="sidebar-brand">
+            <p className="eyebrow">Trader workspace</p>
+            <h2 className="sidebar-title">FundedPro</h2>
+            <p className="surface-copy">Showcase mode keeps the full terminal and trade-history design visible until your first live challenge account is provisioned.</p>
+          </div>
+          <nav className="sidebar-nav">
+            <a className="sidebar-link sidebar-link-gold" href="/checkout">New Challenge</a>
+            <a className={`sidebar-link${isHistoryTab ? "" : " active"}`} href="/dashboard/trades">Trade Now</a>
+            <a className="sidebar-link" href="/dashboard">Overview</a>
+            <a className="sidebar-link" href="/dashboard/account">Account detail</a>
+            <a className={`sidebar-link${isHistoryTab ? " active" : ""}`} href="/dashboard/trades?tab=history">Trade history</a>
+            <a className="sidebar-link" href="/dashboard/billing">Billing</a>
+            <a className="sidebar-link" href="/dashboard/payouts">Payouts</a>
+            <a className="sidebar-link" href="/dashboard/support">Support</a>
+            <a className="sidebar-link" href="/login">Switch account</a>
+            {session?.role === "ADMIN" ? <a className="sidebar-link" href="/admin">Admin panel</a> : null}
+          </nav>
+          <form action={logoutAction}>
+            <button className="ghost-button" type="submit">Log out</button>
+          </form>
+        </aside>
+
+        <section className="dashboard-main account-page">
+          {isHistoryTab ? (
+            <>
+              <section className="dashboard-hero">
+                <div className="hero-stack">
+                  <div>
+                    <p className="eyebrow">Trade history</p>
+                    <h1 className="page-title">Closed trades and open positions</h1>
+                    <p className="page-copy">This showcase history view matches the designed funded workspace until a real challenge account starts producing live trades.</p>
+                  </div>
+                  <div className="hero-inline-metrics">
+                    <article className="inline-metric">
+                      <span>Total trades</span>
+                      <strong>{account.totalTrades}</strong>
+                    </article>
+                    <article className="inline-metric">
+                      <span>Win rate</span>
+                      <strong>{account.winRate}%</strong>
+                    </article>
+                    <article className="inline-metric">
+                      <span>Average hold</span>
+                      <strong>{account.avgHoldingMinutes}m</strong>
+                    </article>
+                  </div>
+                </div>
+              </section>
+
+              <section className="account-detail-grid wide-gap">
+                <article className="table-card">
+                  <div className="table-wrap">
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>Symbol</th>
+                          <th>Side</th>
+                          <th>Open</th>
+                          <th>Close</th>
+                          <th>Realized</th>
+                          <th>Closed</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {account.closedTrades.map((trade, index) => (
+                          <tr key={`${trade.symbol}-${index}`}>
+                            <td>{trade.symbol}</td>
+                            <td>{trade.side}</td>
+                            <td>{trade.openPrice}</td>
+                            <td>{trade.closePrice}</td>
+                            <td>{trade.realized}</td>
+                            <td>{trade.closed}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </article>
+                <article className="surface-card emphasis-card">
+                  <span className="muted-label">Open positions</span>
+                  <div className="session-table">
+                    {account.positions.map((position) => (
+                      <div className="session-row" key={position.symbol}>
+                        <span>{position.symbol}</span>
+                        <strong>{position.pnl}</strong>
+                        <span>{position.detail}</span>
+                      </div>
+                    ))}
+                  </div>
+                </article>
+              </section>
+            </>
+          ) : (
+            <section className="trade-now-showcase-frame">
+              <div className="trade-now-callout callout-left">
+                <strong>Account-aware terminal</strong>
+                <p>The same trader workspace can stay visually complete before a live account is provisioned.</p>
+              </div>
+              <div className="trade-now-callout callout-top">
+                <strong>Execution strip</strong>
+                <p>Buy and sell controls, layout tabs, and account context stay visible in showcase mode.</p>
+              </div>
+              <div className="trade-now-callout callout-right">
+                <strong>Risk snapshot</strong>
+                <p>Drawdown, rule usage, and current balance metrics still match the intended premium terminal layout.</p>
+              </div>
+              <div className="trade-now-callout callout-bottom">
+                <strong>Blotter and market data</strong>
+                <p>Once checkout provisions a live challenge, these showcase values are replaced by internal Trade Now data.</p>
+              </div>
+
+              <div className="trade-now-preview">
+                <div className="trade-now-preview-header">
+                  <div className="trade-now-preview-account">
+                    <strong>#{account.login}</strong>
+                    <span>Showcase terminal</span>
+                    <small>{formatUsd(account.balance)} balance</small>
+                  </div>
+                  <div className="trade-now-preview-toolbar">
+                    <div className="trade-now-preview-input">ES</div>
+                    <button type="button" className="trade-now-preview-buy">Buy</button>
+                    <button type="button" className="trade-now-preview-sell">Sell</button>
+                    <button type="button">Flatten</button>
+                  </div>
+                </div>
+
+                <div className="trade-now-preview-body">
+                  <div className="trade-now-preview-ladder">
+                    <div className="trade-now-preview-ladder-head">
+                      <strong>ES6</strong>
+                      <span>Order ladder</span>
+                    </div>
+                    <div className="trade-now-preview-book">
+                      {["5221.50", "5221.25", "5221.00", "5220.75", "5220.50", "5220.25", "5220.00"].map((price, index) => (
+                        <div className="trade-now-preview-row" key={price}>
+                          <span className="bid">{index < 3 ? index + 1 : 0}</span>
+                          <strong>{price}</strong>
+                          <span className="ask">{index > 3 ? index - 2 : 0}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="trade-now-preview-main">
+                    <div className="trade-now-preview-timeframes">
+                      <span>1m</span>
+                      <span className="active">5m</span>
+                      <span>15m</span>
+                      <span>1h</span>
+                    </div>
+                    <div className="trade-now-preview-chart">
+                      <div className="trade-now-preview-chart-line" />
+                      <div className="trade-now-preview-chart-line secondary" />
+                      <div className="trade-now-preview-last-price">5220.75</div>
+                    </div>
+                    <div className="trade-now-preview-footer">
+                      <div className="trade-now-preview-market">
+                        <div className="trade-now-preview-tabs">
+                          <span className="active">Market</span>
+                          <span>Orders</span>
+                          <span>News</span>
+                        </div>
+                        <div className="trade-now-preview-market-grid">
+                          <span>Last</span><strong>5220.75</strong><span className="positive">+6.25</span>
+                          <span>Bid</span><strong>5220.50</strong><span>2</span>
+                          <span>Ask</span><strong>5221.00</strong><span>1</span>
+                        </div>
+                      </div>
+                      <div className="trade-now-preview-blotter">
+                        <div className="trade-now-preview-tabs">
+                          <span className="active">Blotter</span>
+                          <span>Positions</span>
+                        </div>
+                        <div className="trade-now-preview-empty">
+                          2 open positions, {account.totalTrades} closed trades, win rate {account.winRate}%.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="trade-now-preview-risk">
+                    <strong>Risk</strong>
+                    <div className="trade-now-preview-risk-grid">
+                      <div>
+                        <span>Balance</span>
+                        <strong>{formatUsd(account.balance)}</strong>
+                      </div>
+                      <div>
+                        <span>Equity</span>
+                        <strong>{formatUsd(account.equity)}</strong>
+                      </div>
+                      <div>
+                        <span>P&amp;L</span>
+                        <strong className="positive">+{formatUsd(account.pnl)}</strong>
+                      </div>
+                      <div>
+                        <span>Progress</span>
+                        <strong>{account.progressPct}%</strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
+        </section>
+      </main>
+      <Footer />
+    </SiteShell>
+  );
+}
+
 export default async function TradeNowPage({ searchParams }: TradeNowPageProps) {
   const session = await getSession();
   if (!session) redirect("/login?next=%2Fdashboard%2Ftrades");
@@ -172,7 +394,7 @@ export default async function TradeNowPage({ searchParams }: TradeNowPageProps) 
     );
 
     if (!userAccounts.rowCount) {
-      return renderEmptyTradeNowState();
+      return renderShowcaseTradeWorkspace(session, filters.tab);
     }
 
     return (
