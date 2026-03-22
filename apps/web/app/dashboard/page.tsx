@@ -265,6 +265,7 @@ function renderOfflineDemoDashboard(session: Awaited<ReturnType<typeof getSessio
     { label: "Asia", rate: 42, width: "42%" }
   ];
   const radarValues = { top: 82, right: 73, bottom: winRate, left: 86 };
+  const demoWorkspaceHref = "/dashboard";
   const shareUrl = `mailto:?subject=${encodeURIComponent("FundedPro account summary")}&body=${encodeURIComponent(
     `Trader: ${displayName}\nAccount: ${accountSummary.latestLogin}\nAllocation: ${formatUsd(totalAllocation)}\nBalance: ${formatUsd(balance)}\nEquity: ${formatUsd(equity)}\nPnL: ${formatUsd(pnl, { signed: true })}`
   )}`;
@@ -281,13 +282,13 @@ function renderOfflineDemoDashboard(session: Awaited<ReturnType<typeof getSessio
           </div>
           <nav className="sidebar-nav">
             <a className="sidebar-link sidebar-link-gold" href="/checkout">New Challenge</a>
-            <a className="sidebar-link" href="/dashboard/trades">Trade Now</a>
+            <a className="sidebar-link" href={demoWorkspaceHref}>Trade Now</a>
             <a className="sidebar-link active" href="/dashboard">Overview</a>
-            <a className="sidebar-link" href="/dashboard/account">Account detail</a>
-            <a className="sidebar-link" href="/dashboard/trades?tab=history">Trade history</a>
-            <a className="sidebar-link" href="/dashboard/billing">Billing</a>
-            <a className="sidebar-link" href="/dashboard/payouts">Payouts</a>
-            <a className="sidebar-link" href="/dashboard/support">Support</a>
+            <a className="sidebar-link" href={demoWorkspaceHref}>Account detail</a>
+            <a className="sidebar-link" href={demoWorkspaceHref}>Trade history</a>
+            <a className="sidebar-link" href={demoWorkspaceHref}>Billing</a>
+            <a className="sidebar-link" href={demoWorkspaceHref}>Payouts</a>
+            <a className="sidebar-link" href={demoWorkspaceHref}>Support</a>
             <a className="sidebar-link" href="/login">Switch account</a>
             {session?.role === "ADMIN" ? <a className="sidebar-link" href="/admin">Admin panel</a> : null}
           </nav>
@@ -312,8 +313,8 @@ function renderOfflineDemoDashboard(session: Awaited<ReturnType<typeof getSessio
             </div>
             <div className="overview-actions">
               <a href="/checkout" className="overview-action overview-action-primary">New Challenge</a>
-              <a href="/dashboard/trades" className="overview-action">Trade Now</a>
-              <a href="/dashboard/account" className="overview-action">{accountSummary.totalAccounts} Logins</a>
+              <a href={demoWorkspaceHref} className="overview-action">Trade Now</a>
+              <a href={demoWorkspaceHref} className="overview-action">{accountSummary.totalAccounts} Logins</a>
               <a href={shareUrl} className="overview-action">Share</a>
             </div>
           </section>
