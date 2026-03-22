@@ -521,11 +521,8 @@ export default async function TradeNowPage({ searchParams }: TradeNowPageProps) 
       [session.userId]
     );
 
-    if (!userAccounts.rowCount) {
-      return renderShowcaseTradeWorkspace(session, filters.tab);
-    }
-
-    return (
+    if (userAccounts.rowCount) {
+      return (
       <SiteShell>
         <main className="trade-terminal-login-shell">
           <section className="trade-terminal-login-card">
@@ -561,7 +558,8 @@ export default async function TradeNowPage({ searchParams }: TradeNowPageProps) 
           </section>
         </main>
       </SiteShell>
-    );
+      );
+    }
   }
 
   const terminal = await getDemoTradingTerminal(session.userId, filters);
