@@ -42,18 +42,6 @@ export async function getChartFeed(input: {
   const timeframe = getTimeframe(input.timeframe);
   const db = getDb();
 
-  if (supportsDelayedChartSymbol(input.symbol)) {
-    const delayed = await getDelayedSnapshot(input.symbol, timeframe);
-
-    if (delayed?.candles.length) {
-      return {
-        candles: delayed.candles,
-        lastPrice: delayed.price,
-        source: "DELAYED_EXTERNAL"
-      };
-    }
-  }
-
   const instrumentResult = await db.query<{ instrumentId: string }>(
     `
       SELECT "id" AS "instrumentId"

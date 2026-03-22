@@ -9,6 +9,7 @@ type TradeStripActionsProps = {
   demoAccountId: string;
   instrumentId: string;
   symbol: string;
+  marketDataSource: "DELAYED_EXTERNAL" | "SIMULATED";
   tab: string;
   maxContracts: number;
   timeframe: string;
@@ -28,6 +29,7 @@ export function TradeStripActions({
   demoAccountId,
   instrumentId,
   symbol,
+  marketDataSource,
   tab,
   maxContracts,
   timeframe,
@@ -79,7 +81,11 @@ export function TradeStripActions({
           disabled={Boolean(tradingLockedReason)}
         />
         <small>Max {maxAllowed.toLocaleString("en-US")}</small>
-        <small className="negative">Market data may be delayed for some instruments.</small>
+        <small className={marketDataSource === "DELAYED_EXTERNAL" ? "negative" : ""}>
+          {marketDataSource === "DELAYED_EXTERNAL"
+            ? "Charts can be delayed for some instruments. Orders still submit against the current Trade Now execution price."
+            : "Orders submit against the current Trade Now execution price feed."}
+        </small>
       </div>
       <div className="trade-strip-presets">
         {presets.map((preset) => (

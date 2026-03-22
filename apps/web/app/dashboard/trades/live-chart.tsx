@@ -211,7 +211,7 @@ export function LiveChart({ symbol, initialCandles, lastPrice, change, linkedSym
         if (!cancelled) {
           timeoutId = window.setTimeout(() => {
             void refresh();
-          }, 2500);
+          }, 500);
         }
       }
     }

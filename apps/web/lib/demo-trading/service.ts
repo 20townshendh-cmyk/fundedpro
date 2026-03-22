@@ -2,7 +2,6 @@
 
 import { getDb } from "@fundedpro/db";
 import { ensureDemoTradingWorkspaceForTradingAccount, ensureDemoTradingWorkspaceForUser } from "./bootstrap";
-import { getDelayedSnapshot } from "./delayed-feed";
 import { advanceDemoMarket } from "./engine";
 
 type TerminalSearch = {
@@ -264,37 +263,10 @@ export async function getDemoTradingTerminal(userId: string, search?: TerminalSe
     watchlistItemsResult.rows[0] ??
     null;
 
-  const delayedSymbols = watchlistItemsResult.rows
-    .filter((item) => item.symbol === "ES" || item.symbol === "NQ")
-    .map((item) => item.symbol);
-  const delayedSnapshots = await Promise.all(delayedSymbols.map((symbol) => getDelayedSnapshot(symbol)));
-  const delayedMap = new Map(
-    delayedSnapshots
-      .filter((snapshot): snapshot is NonNullable<typeof snapshot> => Boolean(snapshot))
-      .map((snapshot) => [snapshot.symbol, snapshot])
-  );
-  const watchlistItems = watchlistItemsResult.rows.map((item) => {
-    const delayed = delayedMap.get(item.symbol);
-
-    if (!delayed) {
-      return item;
-    }
-
-    return {
-      ...item,
-      price: delayed.price.toFixed(2),
-      changeAmount: delayed.changeAmount.toFixed(2),
-      changePct: delayed.changePct.toFixed(2)
-    };
-  });
-  const selectedInstrumentWithDelayed =
-    watchlistItems.find((item) => item.symbol === selectedInstrument?.symbol) ??
-    selectedInstrument;
+  const watchlistItems = watchlistItemsResult.rows;
+  const selectedInstrumentWithDelayed = selectedInstrument;
   const executionInstrument = selectedInstrument;
-  const marketDataSource: "DELAYED_EXTERNAL" | "SIMULATED" =
-    selectedInstrumentWithDelayed && delayedMap.has(selectedInstrumentWithDelayed.symbol)
-      ? "DELAYED_EXTERNAL"
-      : "SIMULATED";
+  const marketDataSource: "DELAYED_EXTERNAL" | "SIMULATED" = "SIMULATED";
 
   const [chartTicksResult, positionsResult, ordersResult, fillsResult, historyResult] = selectedInstrumentWithDelayed && activeAccount
     ? await Promise.all([

@@ -258,6 +258,7 @@ export default async function TradeNowPage({ searchParams }: TradeNowPageProps) 
                     demoAccountId={terminal.activeAccount.id}
                     instrumentId={terminal.selectedInstrument.instrumentId}
                     symbol={symbol}
+                    marketDataSource={terminal.marketDataSource}
                     tab={terminal.selectedTab}
                     maxContracts={maxContracts}
                     timeframe={timeframe}
