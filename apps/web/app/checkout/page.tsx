@@ -131,7 +131,7 @@ export default async function CheckoutLandingPage({ searchParams }: CheckoutPage
               <div>
                 <p className="eyebrow">New Challenge</p>
                 <h1 className="page-title">Build your funded path</h1>
-                <p className="page-copy">Choose the challenge that matches your trading style, then continue into checkout and Trade Now account setup.</p>
+                <p className="page-copy">Choose the challenge that matches your trading style, then continue into checkout and Phynic account setup.</p>
                 <p className="checkout-promo-callout">{MARKETING_SALE_DISCOUNT_PCT}% off</p>
               </div>
             </div>
@@ -252,7 +252,7 @@ export default async function CheckoutLandingPage({ searchParams }: CheckoutPage
               <strong className="checkout-summary-title">
                 {selectedPlan.accountSize.toLocaleString("en-GB", { style: "currency", currency: "USD", maximumFractionDigits: 0 })} | {selectedPlan.name}
               </strong>
-              <p className="surface-copy">Platform: Trade Now</p>
+              <p className="surface-copy">Platform: Phynic</p>
               <div className="checkout-status-row">
                 <span className="muted-label">Payout split</span>
                 <span>{selectedPlan.payoutSplitPct}%</span>
@@ -278,7 +278,7 @@ export default async function CheckoutLandingPage({ searchParams }: CheckoutPage
               <div className="checkout-agreement">
                 <label className="checkout-checkbox-row">
                   <input type="checkbox" checked readOnly />
-                  <span>Challenge terms, Trade Now account setup, and payment routing are included in this checkout flow.</span>
+                  <span>Challenge terms, Phynic account setup, and payment routing are included in this checkout flow.</span>
                 </label>
               </div>
               {error === "invalid-coupon" ? <p className="checkout-error-copy">Coupon code is invalid.</p> : null}

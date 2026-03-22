@@ -3,7 +3,7 @@ import { CTASection, FeatureGrid, Footer, MarketingSection, PageHero, SiteShell,
 import { howItWorksSteps } from "@fundedpro/domain/marketing";
 
 export const metadata: Metadata = {
-  title: "How FundedPro Works | From Checkout To Trade Now",
+  title: "How FundedPro Works | From Checkout To Phynic",
   description:
     "See how FundedPro moves traders from checkout to credentials, internal trading access, dashboard tracking, and funded progression."
 };
@@ -16,7 +16,7 @@ export default function HowItWorksPage() {
         <PageHero
           eyebrow="How it works"
           title="A simple path from checkout to live account tracking"
-          description="Buy a challenge, receive credentials, trade in Trade Now, and track progress inside a cleaner dashboard."
+          description="Buy a challenge, receive credentials, trade in Phynic, and track progress inside a cleaner dashboard."
           primaryCta={{ href: "/challenges", label: "Compare challenges" }}
         />
         <section className="section-stack marketing-highlight-grid">

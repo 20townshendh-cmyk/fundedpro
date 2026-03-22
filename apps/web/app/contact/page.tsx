@@ -41,7 +41,7 @@ export default function ContactPage() {
             </article>
             <article className="surface-card">
               <h3 className="feature-title">Existing traders</h3>
-              <p className="surface-copy">Sign in if you already have credentials and need billing, account setup, Trade Now, or payout support.</p>
+              <p className="surface-copy">Sign in if you already have credentials and need billing, account setup, Phynic, or payout support.</p>
               <div className="button-row">
                 <a href="/login" className="marketing-inline-link">Open trader area</a>
                 <a href="/dashboard/support" className="marketing-inline-link">Support workspace</a>

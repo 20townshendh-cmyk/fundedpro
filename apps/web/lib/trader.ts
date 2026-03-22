@@ -208,9 +208,9 @@ export async function provisionTradingAccountForOrder(input: {
   const metrics = getPlanMetrics(input);
   const accountId = randomUUID();
   const login = input.loginOverride ?? await generateUniqueLogin(input.db);
-  const provider = input.providerOverride ?? "trade-now";
-  const platform = input.platformOverride ?? "Trade Now";
-  const connection = input.connectionOverride ?? "FundedPro Internal";
+  const provider = input.providerOverride ?? "phynic";
+  const platform = input.platformOverride ?? "Phynic";
+  const connection = input.connectionOverride ?? "Phynic";
   const tradingPassword = input.passwordOverride ?? generateTradingPassword();
   const encryptedTradingPassword = encryptTradingPassword(tradingPassword);
 

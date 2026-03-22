@@ -45,7 +45,7 @@ export default async function AdminSettingsPage() {
               <div>
                 <p className="eyebrow">Admin settings</p>
                 <h1 className="page-title">Platform controls and integrations</h1>
-                <p className="page-copy">This settings layer is where auth, payments, email, storage, and Trade Now platform controls can be surfaced for operations.</p>
+                <p className="page-copy">This settings layer is where auth, payments, email, storage, and Phynic platform controls can be surfaced for operations.</p>
               </div>
               <div className="hero-inline-metrics">
                 <article className="inline-metric">
@@ -58,7 +58,7 @@ export default async function AdminSettingsPage() {
                 </article>
                 <article className="inline-metric">
                   <span>Platform</span>
-                  <strong>Trade Now</strong>
+                  <strong>Phynic</strong>
                 </article>
                 <article className="inline-metric">
                   <span>Auth</span>

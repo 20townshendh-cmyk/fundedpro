@@ -42,11 +42,11 @@ export function HomeVideoProof() {
     <section className="section-stack">
       <div className="trade-now-showcase">
         <div className="trade-now-showcase-copy">
-          <p className="eyebrow">Inside Trade Now</p>
+          <p className="eyebrow">Inside Phynic</p>
           <h2 className="section-title">
             A picture of our
             {" "}
-            <span className="accent-text">actual Trade Now layout</span>
+            <span className="accent-text">actual Phynic layout</span>
           </h2>
           <p className="section-copy">
             The main terminal is laid out so execution, chart context, and account risk all stay visible on one screen.
@@ -54,7 +54,7 @@ export function HomeVideoProof() {
         </div>
 
         <div className="trade-now-shot">
-          <div className="trade-now-shot-canvas" aria-label="FundedPro Trade Now screenshot style preview">
+          <div className="trade-now-shot-canvas" aria-label="FundedPro Phynic screenshot style preview">
             <div className="trade-now-shot-header">
               <div className="trade-now-shot-left-title">
                 <strong>ES6</strong>

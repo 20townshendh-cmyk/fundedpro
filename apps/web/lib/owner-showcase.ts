@@ -28,7 +28,7 @@ export async function ensureOwnerShowcaseWorkspace(userId: string, email: string
 
   const db = getDb();
 
-  await db.query(
+  const challengePlanResult = await db.query<{ id: string }>(
     `
       INSERT INTO "ChallengePlan" (
         "id", "slug", "name", "challengeType", "accountSize", "priceCents", "phaseCount",
@@ -41,6 +41,7 @@ export async function ensureOwnerShowcaseWorkspace(userId: string, email: string
         "name" = EXCLUDED."name",
         "accountSize" = EXCLUDED."accountSize",
         "updatedAt" = NOW()
+      RETURNING "id"
     `,
     [
       SHOWCASE_PLAN.id,
@@ -57,6 +58,7 @@ export async function ensureOwnerShowcaseWorkspace(userId: string, email: string
       SHOWCASE_PLAN.payoutSplitPct
     ]
   );
+  const challengePlanId = challengePlanResult.rows[0]?.id ?? SHOWCASE_PLAN.id;
 
   const orderId = `owner-showcase-order-${userId}`;
   const invoiceId = `owner-showcase-invoice-${userId}`;
@@ -68,9 +70,9 @@ export async function ensureOwnerShowcaseWorkspace(userId: string, email: string
       INSERT INTO "ChallengeOrder" ("id", "userId", "challengePlanId", "stripeSessionId", "status", "createdAt", "updatedAt")
       VALUES ($1, $2, $3, $4, 'PAID', NOW(), NOW())
       ON CONFLICT ("id")
-      DO UPDATE SET "status" = 'PAID', "updatedAt" = NOW()
+      DO UPDATE SET "challengePlanId" = EXCLUDED."challengePlanId", "status" = 'PAID', "updatedAt" = NOW()
     `,
-    [orderId, userId, SHOWCASE_PLAN.id, `owner-showcase-session-${userId}`]
+    [orderId, userId, challengePlanId, `owner-showcase-session-${userId}`]
   );
 
   await db.query(
@@ -86,17 +88,19 @@ export async function ensureOwnerShowcaseWorkspace(userId: string, email: string
   await db.query(
     `
       INSERT INTO "TradingAccount" (
-        "id", "userId", "challengeOrderId", "login", "provider", "accountState", "currentPhase", "startingBalance",
+        "id", "userId", "challengeOrderId", "login", "platform", "connection", "provider", "accountState", "currentPhase", "startingBalance",
         "phaseStartBalance", "currentBalance", "currentEquity", "dailyLossLimit", "totalLossLimit", "profitTarget",
         "tradingDays", "phaseStartedAt", "lastEvaluatedAt", "createdAt", "updatedAt"
       )
       VALUES (
-        $1, $2, $3, 'FP860251', 'internal-demo', 'EVALUATION', 1, 100000.00,
+        $1, $2, $3, 'FP860251', 'Phynic', 'Phynic', 'phynic', 'EVALUATION', 1, 100000.00,
         100000.00, 100000.00, 100000.00, 3000.00, 6000.00, 8000.00,
         0, NOW(), NOW(), NOW(), NOW()
       )
       ON CONFLICT ("challengeOrderId")
       DO UPDATE SET
+        "platform" = EXCLUDED."platform",
+        "connection" = EXCLUDED."connection",
         "provider" = EXCLUDED."provider",
         "accountState" = EXCLUDED."accountState",
         "currentPhase" = EXCLUDED."currentPhase",

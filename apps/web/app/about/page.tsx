@@ -15,7 +15,7 @@ export default function AboutPage() {
         <PageHero
           eyebrow="About"
           title="A cleaner prop-firm platform for serious futures traders"
-          description="FundedPro combines challenge sales, trader analytics, Trade Now, payouts, and operations in one sharper system."
+          description="FundedPro combines challenge sales, trader analytics, Phynic, payouts, and operations in one sharper system."
         />
         <section className="section-stack marketing-highlight-grid">
           <a className="marketing-highlight-card marketing-highlight-card-blue marketing-highlight-link" href="/about?assistant=Explain%20how%20FundedPro%20is%20different%20from%20a%20typical%20prop%20firm%20in%20more%20detail">
@@ -41,7 +41,7 @@ export default function AboutPage() {
             </article>
             <article className="surface-card">
               <h3 className="feature-title">Operational core</h3>
-              <p className="surface-copy">Trader portal, admin workflows, challenge logic, and Trade Now account infrastructure are part of the same product roadmap.</p>
+              <p className="surface-copy">Trader portal, admin workflows, challenge logic, and Phynic account infrastructure are part of the same product roadmap.</p>
             </article>
           </div>
         </MarketingSection>

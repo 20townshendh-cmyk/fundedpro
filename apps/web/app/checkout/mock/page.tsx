@@ -150,7 +150,7 @@ export default async function MockCheckoutPage({
                 <div className="checkout-option-grid three-up compact">
                   <article className="checkout-option selected compact-option">
                     <span className="checkout-radio" />
-                    <strong>Trade Now</strong>
+                    <strong>Phynic</strong>
                     <span>Included</span>
                   </article>
                   <article className="checkout-option compact-option">
@@ -195,7 +195,7 @@ export default async function MockCheckoutPage({
               <strong className="checkout-summary-title">
                 {order.accountSize.toLocaleString("en-GB", { style: "currency", currency: "USD", maximumFractionDigits: 0 })} | {challengeType} {order.name}
               </strong>
-              <p className="surface-copy">Platform: Trade Now</p>
+              <p className="surface-copy">Platform: Phynic</p>
               <div className="checkout-status-row">
                 <span className="muted-label">Order state</span>
                 <span className="status-pill">{order.status}</span>

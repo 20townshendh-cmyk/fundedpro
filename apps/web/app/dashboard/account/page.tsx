@@ -110,7 +110,7 @@ function renderShowcaseAccountDetail(session: Awaited<ReturnType<typeof getSessi
           </div>
           <nav className="sidebar-nav">
             <a className="sidebar-link sidebar-link-gold" href="/checkout">New Challenge</a>
-            <a className="sidebar-link" href="/dashboard/trades">Trade Now</a>
+            <a className="sidebar-link" href="/dashboard/trades">Phynic</a>
             <a className="sidebar-link" href="/dashboard">Overview</a>
             <a className="sidebar-link active" href="/dashboard/account">Account detail</a>
             <a className="sidebar-link" href="/dashboard/trades?tab=history">Trade history</a>
@@ -521,7 +521,7 @@ export default async function AccountDetailPage({ searchParams }: AccountPagePro
         <aside className="dashboard-sidebar">
           <nav className="sidebar-nav">
             <a className="sidebar-link sidebar-link-gold" href="/checkout">New Challenge</a>
-            <a className="sidebar-link" href="/dashboard/trades">Trade Now</a>
+            <a className="sidebar-link" href="/dashboard/trades">Phynic</a>
             <a className="sidebar-link" href="/dashboard">Overview</a>
             <a className="sidebar-link active" href="/dashboard/account">Account detail</a>
             <a className="sidebar-link" href="/dashboard/trades?tab=history">Trade history</a>
@@ -641,14 +641,14 @@ export default async function AccountDetailPage({ searchParams }: AccountPagePro
                     <article className="surface-card metric-panel">
                       <span className="muted-label">Trading password</span>
                       <strong className="metric-value"><code>{decryptTradingPassword(detailAccount.tradingPassword) ?? "Pending"}</code></strong>
-                      <p className="surface-copy">Use this password with your Trade Now login.</p>
+                      <p className="surface-copy">Use this password with your Phynic login.</p>
                     </article>
                     <article className="surface-card metric-panel">
                       <span className="muted-label">Credential status</span>
                       <strong className="metric-value">{detailAccount.credentialsIssuedAt ? "Issued" : "Pending"}</strong>
                       <p className="surface-copy">
                         {detailAccount.credentialsIssuedAt
-                          ? `Credentials were issued ${new Date(detailAccount.credentialsIssuedAt).toLocaleString("en-GB")} and emailed to you. Use those details to sign in to Trade Now.`
+                          ? `Credentials were issued ${new Date(detailAccount.credentialsIssuedAt).toLocaleString("en-GB")} and emailed to you. Use those details to sign in to Phynic.`
                           : "Credentials will appear here once provisioning completes."}
                       </p>
                     </article>
@@ -678,11 +678,11 @@ export default async function AccountDetailPage({ searchParams }: AccountPagePro
       <section className="account-section">
         <article className="surface-card emphasis-card">
           <span className="muted-label">Account ready</span>
-          <strong className="metric-value">Sign in to Trade Now</strong>
+          <strong className="metric-value">Sign in to Phynic</strong>
           <p className="surface-copy">Login: <code>#{detailAccount.login}</code></p>
           <p className="surface-copy">Password: <code>{decryptTradingPassword(detailAccount.tradingPassword) ?? "Pending"}</code></p>
           <div className="button-row">
-                          <a href={selectedAccount ? `/dashboard/trades?accountId=${selectedAccount.id}` : "/dashboard/trades"} className="account-browser-buy">Open Trade Now</a>
+                          <a href={selectedAccount ? `/dashboard/trades?accountId=${selectedAccount.id}` : "/dashboard/trades"} className="account-browser-buy">Open Phynic</a>
                           <a href="/dashboard/billing" className="ghost-button">Open Billing</a>
                         </div>
                       </article>
@@ -977,7 +977,7 @@ export default async function AccountDetailPage({ searchParams }: AccountPagePro
 
                     <article className="surface-card account-disclaimer">
                       <strong>Trading Results Disclaimer</strong>
-                      <p className="surface-copy">Trading results on this dashboard are sourced from your internal Trade Now activity. Small timing differences can still appear while the workstation recalculates balances and history.</p>
+                      <p className="surface-copy">Trading results on this dashboard are sourced from your internal Phynic activity. Small timing differences can still appear while the workstation recalculates balances and history.</p>
                     </article>
                   </div>
                 </div>

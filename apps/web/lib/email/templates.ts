@@ -225,7 +225,7 @@ export function buildAccountBreachedEmail(input: {
       eyebrow: "Risk Alert",
       title: "Your account has been breached.",
       intro: `Hi ${input.fullName}, account ${input.login} has triggered a breach state.`,
-      body: "Trade entry has been locked in Trade Now because one or more challenge rule limits were exceeded. Open your account area to review the status and next steps.",
+      body: "Trade entry has been locked in Phynic because one or more challenge rule limits were exceeded. Open your account area to review the status and next steps.",
       ctaLabel: "Open Account",
       ctaHref: input.accountUrl,
       footer: "This alert was sent automatically when your account moved into a breached state."

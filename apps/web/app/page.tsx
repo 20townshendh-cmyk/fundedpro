@@ -79,7 +79,7 @@ export default function HomePage() {
         <MarketingSection
           eyebrow="Built for serious traders"
           title="A premium evaluation platform with clear rules and a sharper operational backbone"
-          description="FundedPro combines polished trader UX with the systems a real prop operation needs: challenge tracking, payout workflows, risk monitoring, Trade Now account state, and admin control."
+          description="FundedPro combines polished trader UX with the systems a real prop operation needs: challenge tracking, payout workflows, risk monitoring, Phynic account state, and admin control."
         >
           <div className="metric-grid">
             {trustMetrics.map((metric) => (

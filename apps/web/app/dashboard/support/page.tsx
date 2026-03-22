@@ -21,7 +21,7 @@ export default async function SupportPage() {
           </div>
           <nav className="sidebar-nav">
             <a className="sidebar-link sidebar-link-gold" href="/checkout">New Challenge</a>
-            <a className="sidebar-link" href="/dashboard/trades">Trade Now</a>
+            <a className="sidebar-link" href="/dashboard/trades">Phynic</a>
             <a className="sidebar-link" href="/dashboard">Overview</a>
             <a className="sidebar-link" href="/dashboard/account">Account detail</a>
             <a className="sidebar-link" href="/dashboard/trades?tab=history">Trade history</a>
@@ -76,7 +76,7 @@ export default async function SupportPage() {
             <article className="surface-card metric-panel">
               <span className="muted-label">Account support</span>
               <strong className="metric-value">Setup and credentials</strong>
-              <p className="surface-copy">Questions about access, linked accounts, Trade Now setup, or account state.</p>
+              <p className="surface-copy">Questions about access, linked accounts, Phynic setup, or account state.</p>
             </article>
             <article className="surface-card metric-panel">
               <span className="muted-label">Billing help</span>
@@ -109,7 +109,7 @@ export default async function SupportPage() {
             <article className="surface-card emphasis-card">
               <span className="muted-label">AI assistance</span>
               <strong className="metric-value">Fast guided support</strong>
-              <p className="surface-copy">Use the floating AI assistance box in the lower corner for quick guidance on account access, payouts, billing, and Trade Now routing before escalating to manual review.</p>
+              <p className="surface-copy">Use the floating AI assistance box in the lower corner for quick guidance on account access, payouts, billing, and Phynic routing before escalating to manual review.</p>
             </article>
           </section>
         </section>

@@ -282,7 +282,7 @@ function renderOfflineDemoDashboard(session: Awaited<ReturnType<typeof getSessio
           </div>
           <nav className="sidebar-nav">
             <a className="sidebar-link sidebar-link-gold" href="/checkout">New Challenge</a>
-            <a className="sidebar-link" href="/dashboard/trades">Trade Now</a>
+            <a className="sidebar-link" href="/dashboard/trades">Phynic</a>
             <a className="sidebar-link active" href="/dashboard">Overview</a>
             <a className="sidebar-link" href="/dashboard/account">Account detail</a>
             <a className="sidebar-link" href="/dashboard/trades?tab=history">Trade history</a>
@@ -313,7 +313,7 @@ function renderOfflineDemoDashboard(session: Awaited<ReturnType<typeof getSessio
             </div>
             <div className="overview-actions">
               <a href="/checkout" className="overview-action overview-action-primary">New Challenge</a>
-              <a href="/dashboard/trades" className="overview-action">Trade Now</a>
+              <a href="/dashboard/trades" className="overview-action">Phynic</a>
               <a href="/dashboard/account" className="overview-action">{accountSummary.totalAccounts} Logins</a>
               <a href={shareUrl} className="overview-action">Share</a>
             </div>
@@ -654,7 +654,7 @@ export default async function DashboardPage() {
           </div>
           <nav className="sidebar-nav">
             <a className="sidebar-link sidebar-link-gold" href="/checkout">New Challenge</a>
-            <a className="sidebar-link" href="/dashboard/trades">Trade Now</a>
+            <a className="sidebar-link" href="/dashboard/trades">Phynic</a>
             <a className="sidebar-link active" href="/dashboard">Overview</a>
             <a className="sidebar-link" href="/dashboard/account">Account detail</a>
             <a className="sidebar-link" href="/dashboard/trades?tab=history">Trade history</a>
@@ -685,7 +685,7 @@ export default async function DashboardPage() {
             </div>
             <div className="overview-actions">
               <a href="/checkout" className="overview-action overview-action-primary">New Challenge</a>
-              <a href="/dashboard/trades" className="overview-action">Trade Now</a>
+              <a href="/dashboard/trades" className="overview-action">Phynic</a>
               <a href="/dashboard/account" className="overview-action">{accountSummary.totalAccounts} Logins</a>
               <a href={shareUrl} className="overview-action">Share</a>
             </div>
