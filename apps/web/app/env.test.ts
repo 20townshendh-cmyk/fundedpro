@@ -38,4 +38,14 @@ describe("web env", () => {
 
     expect(() => getWebEnv()).toThrow("NEXTAUTH_SECRET must be configured in production.");
   });
+
+  it("trims whitespace and trailing slash from NEXTAUTH_URL", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("NEXTAUTH_SECRET", "prod-secret");
+    vi.stubEnv("NEXTAUTH_URL", " https://fundedpro-live.vercel.app/ \n");
+
+    const env = getWebEnv();
+
+    expect(env.appUrl).toBe("https://fundedpro-live.vercel.app");
+  });
 });

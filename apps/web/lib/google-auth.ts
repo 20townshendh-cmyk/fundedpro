@@ -18,7 +18,11 @@ type GoogleIdTokenPayload = {
   name?: string;
 };
 
-export async function beginGoogleAuth() {
+function buildGoogleRedirectUri(baseUrl: string) {
+  return `${baseUrl.replace(/\/$/, "")}/api/auth/google/callback`;
+}
+
+export async function beginGoogleAuth(baseUrl?: string) {
   const env = getWebEnv();
 
   if (!env.googleClientId || !env.googleClientSecret) {
@@ -37,7 +41,7 @@ export async function beginGoogleAuth() {
 
   const params = new URLSearchParams({
     client_id: env.googleClientId,
-    redirect_uri: `${env.appUrl}/api/auth/google/callback`,
+    redirect_uri: buildGoogleRedirectUri(baseUrl || env.appUrl),
     response_type: "code",
     scope: "openid email profile",
     state,
@@ -47,7 +51,7 @@ export async function beginGoogleAuth() {
   return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
 }
 
-export async function verifyGoogleCallback(input: { code: string; state: string }) {
+export async function verifyGoogleCallback(input: { code: string; state: string }, baseUrl?: string) {
   const env = getWebEnv();
   const cookieStore = await cookies();
   const expectedState = cookieStore.get(GOOGLE_STATE_COOKIE)?.value;
@@ -64,7 +68,7 @@ export async function verifyGoogleCallback(input: { code: string; state: string 
       code: input.code,
       client_id: env.googleClientId,
       client_secret: env.googleClientSecret,
-      redirect_uri: `${env.appUrl}/api/auth/google/callback`,
+      redirect_uri: buildGoogleRedirectUri(baseUrl || env.appUrl),
       grant_type: "authorization_code"
     })
   });

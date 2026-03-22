@@ -44,7 +44,8 @@ For a free setup, deploy the Next.js app on Vercel Hobby and use a free hosted P
 
 ## Safe starter values
 
-- Set `NEXTAUTH_URL` to your Vercel production URL
+- Set `NEXTAUTH_URL` to your Vercel production URL exactly, for example `https://your-project.vercel.app`
+- Do not include trailing spaces, newlines, or an extra trailing slash
 - Set `NEXTAUTH_SECRET` to a long random string
 - Use a hosted Postgres URL with `sslmode=require`
 - Leave `DATABASE_SSL` empty unless you need to force it off

@@ -17,13 +17,23 @@ type WebEnv = {
 
 let cachedEnv: WebEnv | null = null;
 
+function normalizeAppUrl(value: string | undefined) {
+  const trimmed = value?.trim();
+
+  if (!trimmed) {
+    return "http://localhost:3000";
+  }
+
+  return trimmed.endsWith("/") ? trimmed.slice(0, -1) : trimmed;
+}
+
 export function getWebEnv(): WebEnv {
   if (cachedEnv) {
     return cachedEnv;
   }
 
   const nodeEnv = process.env.NODE_ENV || "development";
-  const appUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+  const appUrl = normalizeAppUrl(process.env.NEXTAUTH_URL);
   const nextAuthSecret = process.env.NEXTAUTH_SECRET || "change-me";
   const openAiApiKey = process.env.OPENAI_API_KEY || null;
   const resendApiKey = process.env.RESEND_API_KEY || null;

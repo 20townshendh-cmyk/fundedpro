@@ -14,6 +14,8 @@ import { getWebEnv } from "./env";
 
 const EMAIL_VERIFICATION_WINDOW_MINUTES = 10;
 const PASSWORD_RESET_WINDOW_MINUTES = 10;
+const OFFLINE_DEMO_EMAILS = new Set(["trader@fundedpro.com", "admin@fundedpro.com"]);
+const OFFLINE_DEMO_PASSWORD = "FundedPro123!";
 
 const authSchema = z.object({
   fullName: z.string().min(2).max(80).optional(),
@@ -114,6 +116,15 @@ function isAtLeast16(dateOfBirth: string | undefined) {
 
 function db() {
   return getDb();
+}
+
+function isLocalDbConnectionError(error: unknown) {
+  if (process.env.NODE_ENV !== "development") {
+    return false;
+  }
+
+  const message = error instanceof Error ? error.message : String(error);
+  return message.includes("ECONNREFUSED") || message.includes("127.0.0.1:5433");
 }
 
 function buildSignupRedirect(error: string, formData: FormData): never {
@@ -350,17 +361,48 @@ export async function loginAction(formData: FormData) {
     redirect("/login?error=invalid-credentials");
   }
 
-  const result = await db().query<{
-    id: string;
-    email: string;
-    role: Role;
-    passwordHash: string;
-    emailVerifiedAt: string | null;
-  }>('SELECT "id", "email", "role", "passwordHash", "emailVerifiedAt" FROM "User" WHERE "email" = $1 LIMIT 1', [
-    parsed.data.email
-  ]);
+  if (
+    process.env.NODE_ENV === "development" &&
+    OFFLINE_DEMO_EMAILS.has(parsed.data.email) &&
+    parsed.data.password === OFFLINE_DEMO_PASSWORD
+  ) {
+    await setSession({
+      id: parsed.data.email === "admin@fundedpro.com" ? "offline-admin" : "offline-trader",
+      email: parsed.data.email,
+      role: parsed.data.email === "admin@fundedpro.com" ? "ADMIN" : "TRADER"
+    }, { rememberMe });
+    redirect(getSafeNextPath(parsed.data.next));
+  }
 
-  const user = result.rows[0];
+  let user:
+    | {
+        id: string;
+        email: string;
+        role: Role;
+        passwordHash: string;
+        emailVerifiedAt: string | null;
+      }
+    | undefined;
+
+  try {
+    const result = await db().query<{
+      id: string;
+      email: string;
+      role: Role;
+      passwordHash: string;
+      emailVerifiedAt: string | null;
+    }>('SELECT "id", "email", "role", "passwordHash", "emailVerifiedAt" FROM "User" WHERE "email" = $1 LIMIT 1', [
+      parsed.data.email
+    ]);
+
+    user = result.rows[0];
+  } catch (error) {
+    if (isLocalDbConnectionError(error)) {
+      redirect("/login?error=invalid-credentials");
+    }
+
+    throw error;
+  }
 
   if (!user) {
     redirect("/login?error=invalid-credentials");

@@ -82,13 +82,15 @@ Expected result:
 
 Provider steps:
 
-1. Create a Google OAuth client.
-2. Add the callback URL:
-   - `https://YOUR_DOMAIN/api/auth/google/callback`
-3. Put the credentials into:
+1. In Vercel Project Settings, copy the current production domain exactly, such as `https://your-project.vercel.app`.
+2. Set `NEXTAUTH_URL` to that exact value with no spaces, newlines, typos, or trailing slash, then redeploy.
+3. In Google Cloud, add that same URL as an Authorized JavaScript origin.
+4. Add the callback URL:
+   - `https://your-project.vercel.app/api/auth/google/callback`
+5. Put the credentials into:
    - `GOOGLE_CLIENT_ID`
    - `GOOGLE_CLIENT_SECRET`
-4. Redeploy.
+6. Redeploy.
 
 ### 5. Rotate exposed secrets
 

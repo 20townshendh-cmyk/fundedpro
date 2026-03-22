@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/signup?error=google-failed", request.url));
   }
 
-  const googleUser = await verifyGoogleCallback({ code, state });
+  const googleUser = await verifyGoogleCallback({ code, state }, request.nextUrl.origin);
 
   if (!googleUser) {
     return NextResponse.redirect(new URL("/signup?error=google-failed", request.url));
