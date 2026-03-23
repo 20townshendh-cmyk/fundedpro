@@ -5,6 +5,7 @@ import {
   createChart,
   ColorType,
   type CandlestickData,
+  type LogicalRange,
   type UTCTimestamp,
   CandlestickSeries,
   LineStyle,
@@ -59,6 +60,8 @@ export function LiveChart({
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const priceLineRef = useRef<IPriceLine | null>(null);
+  const visibleRangeRef = useRef<LogicalRange | null>(null);
+  const candleCacheRef = useRef<CandlestickData[]>(toCandleData(initialCandles));
   const currentPriceRef = useRef(lastPrice);
   const activePositionKeyRef = useRef<string | null>(null);
   const viewportKeyRef = useRef(`${symbol}:${initialTimeframe}`);
@@ -142,6 +145,95 @@ export function LiveChart({
     }));
   }
 
+  function candlesMatch(left: CandlestickData[], right: CandlestickData[]) {
+    if (left.length !== right.length) {
+      return false;
+    }
+
+    for (let index = 0; index < left.length; index += 1) {
+      const leftCandle = left[index]!;
+      const rightCandle = right[index]!;
+
+      if (
+        leftCandle.time !== rightCandle.time ||
+        leftCandle.open !== rightCandle.open ||
+        leftCandle.high !== rightCandle.high ||
+        leftCandle.low !== rightCandle.low ||
+        leftCandle.close !== rightCandle.close
+      ) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  function applyCandles(nextCandles: CandlestickData[], requestViewportKey: string) {
+    const chart = chartRef.current;
+    const series = seriesRef.current;
+
+    if (!chart || !series) {
+      return;
+    }
+
+    const previousCandles = candleCacheRef.current;
+    const sameViewport = viewportKeyRef.current === requestViewportKey;
+    const previousRange = sameViewport ? visibleRangeRef.current : null;
+
+    if (!sameViewport || previousCandles.length === 0) {
+      series.setData(nextCandles);
+      candleCacheRef.current = nextCandles;
+      chart.timeScale().fitContent();
+      viewportKeyRef.current = requestViewportKey;
+      visibleRangeRef.current = chart.timeScale().getVisibleLogicalRange();
+      return;
+    }
+
+    if (candlesMatch(previousCandles, nextCandles)) {
+      if (previousRange) {
+        chart.timeScale().setVisibleLogicalRange(previousRange);
+      }
+      return;
+    }
+
+    const previousLast = previousCandles.at(-1) ?? null;
+    const nextLast = nextCandles.at(-1) ?? null;
+    const previousBeforeLast = previousCandles.at(-2) ?? null;
+    const nextBeforeLast = nextCandles.at(-2) ?? null;
+    const canUpdateIncrementally =
+      nextLast != null &&
+      previousLast != null &&
+      (
+        (
+          nextCandles.length === previousCandles.length &&
+          previousBeforeLast != null &&
+          nextBeforeLast != null &&
+          candlesMatch(previousCandles.slice(0, -1), nextCandles.slice(0, -1))
+        ) ||
+        (
+          nextCandles.length === previousCandles.length + 1 &&
+          candlesMatch(previousCandles, nextCandles.slice(0, -1))
+        )
+      );
+
+    if (canUpdateIncrementally) {
+      series.update(nextLast);
+      candleCacheRef.current = nextCandles;
+      if (previousRange) {
+        chart.timeScale().setVisibleLogicalRange(previousRange);
+      }
+      return;
+    }
+
+    series.setData(nextCandles);
+    candleCacheRef.current = nextCandles;
+    if (previousRange) {
+      chart.timeScale().setVisibleLogicalRange(previousRange);
+    } else {
+      chart.timeScale().fitContent();
+    }
+  }
+
   useEffect(() => {
     const container = containerRef.current;
 
@@ -204,7 +296,9 @@ export function LiveChart({
       priceLineVisible: false
     });
 
-    series.setData(toCandleData(initialCandles));
+    const normalizedInitialCandles = toCandleData(initialCandles);
+    candleCacheRef.current = normalizedInitialCandles;
+    series.setData(normalizedInitialCandles);
     priceLineRef.current = series.createPriceLine({
       price: lastPrice,
       color: change >= 0 ? "#16a34a" : "#ef4444",
@@ -214,6 +308,9 @@ export function LiveChart({
       title: "Last"
     });
     chart.timeScale().fitContent();
+    chart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+      visibleRangeRef.current = range;
+    });
 
     chartRef.current = chart;
     seriesRef.current = series;
@@ -272,9 +369,12 @@ export function LiveChart({
       return;
     }
 
-    series.setData(toCandleData(initialCandles));
+    const nextCandles = toCandleData(initialCandles);
+    candleCacheRef.current = nextCandles;
+    series.setData(nextCandles);
     chartRef.current?.timeScale().fitContent();
     viewportKeyRef.current = `${symbol}:${initialTimeframe}`;
+    visibleRangeRef.current = chartRef.current?.timeScale().getVisibleLogicalRange() ?? null;
     setCurrentPrice(lastPrice);
     currentPriceRef.current = lastPrice;
     setCurrentChange(change);
@@ -480,11 +580,7 @@ export function LiveChart({
         return;
       }
 
-      seriesRef.current.setData(toCandleData(data.candles));
-      if (viewportKeyRef.current !== requestViewportKey) {
-        chartRef.current?.timeScale().fitContent();
-        viewportKeyRef.current = requestViewportKey;
-      }
+      applyCandles(toCandleData(data.candles), requestViewportKey);
       setCurrentChange(data.lastPrice - currentPriceRef.current);
       currentPriceRef.current = data.lastPrice;
       setCurrentPrice(data.lastPrice);
