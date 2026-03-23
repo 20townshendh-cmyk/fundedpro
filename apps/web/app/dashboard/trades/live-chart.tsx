@@ -1,6 +1,7 @@
 "use client";
 
 import { startTransition, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   createChart,
   ColorType,
@@ -55,6 +56,7 @@ export function LiveChart({
   layout = "focus",
   instruments = []
 }: LiveChartProps) {
+  const router = useRouter();
   const live = useTradeLiveContext();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -405,10 +407,10 @@ export function LiveChart({
     });
   }, [currentPrice, currentChange]);
 
-  useEffect(() => {
-    const nextUrl = `/dashboard/trades?symbol=${encodeURIComponent(activeSymbol)}&timeframe=${encodeURIComponent(timeframe)}${baseQuery}`;
-    window.history.replaceState({}, "", nextUrl);
-  }, [activeSymbol, timeframe, baseQuery]);
+  function syncRoute(nextSymbol: string, nextTimeframe: Timeframe) {
+    const nextUrl = `/dashboard/trades?symbol=${encodeURIComponent(nextSymbol)}&timeframe=${encodeURIComponent(nextTimeframe)}${baseQuery}`;
+    router.replace(nextUrl, { scroll: false });
+  }
 
   useEffect(() => {
     const handleRefreshEvent = () => {
@@ -654,10 +656,9 @@ export function LiveChart({
                   className={`trade-chip trade-symbol-chip${linkedSymbol === activeSymbol ? " active" : ""}`}
                   onClick={() => {
                     if (linkedSymbol === activeSymbol) return;
-                    startTransition(() => {
-                      setIsLoading(true);
-                      setActiveSymbol(linkedSymbol);
-                    });
+                    setIsLoading(true);
+                    setActiveSymbol(linkedSymbol);
+                    syncRoute(linkedSymbol, timeframe);
                   }}
                 >
                   {linkedSymbol}
@@ -675,10 +676,9 @@ export function LiveChart({
                 className={`trade-chip${option === timeframe ? " active" : ""}`}
                 onClick={() => {
                   if (option === timeframe) return;
-                  startTransition(() => {
-                    setIsLoading(true);
-                    setTimeframe(option);
-                  });
+                  setIsLoading(true);
+                  setTimeframe(option);
+                  syncRoute(activeSymbol, option);
                 }}
               >
                 {option}
