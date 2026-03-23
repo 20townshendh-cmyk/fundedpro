@@ -202,7 +202,25 @@ export default async function TradeNowPage({ searchParams }: TradeNowPageProps) 
       <FlashToast items={toastItems} />
       <TradeLiveProvider
         accountId={filters.accountId}
-        initialState={{ activeAccount: terminal.activeAccount, positions: terminal.positions }}
+        symbol={symbol}
+        initialState={{
+          activeAccount: terminal.activeAccount,
+          positions: terminal.positions,
+          selectedInstrument: terminal.selectedInstrument
+            ? {
+                instrumentId: terminal.selectedInstrument.instrumentId,
+                symbol: terminal.selectedInstrument.symbol,
+                price: terminal.selectedInstrument.price,
+                changeAmount: terminal.selectedInstrument.changeAmount,
+                latestSource: terminal.selectedInstrument.latestSource,
+                latestTickAt: terminal.selectedInstrument.latestTickAt
+                  ? new Date(terminal.selectedInstrument.latestTickAt).toISOString()
+                  : null
+              }
+            : null,
+          feedStatus: terminal.feedStatus,
+          lastTickAt: terminal.lastTickAt
+        }}
       >
       <main className="trade-fullscreen-shell">
         <section className="trade-now-page">

@@ -38,7 +38,7 @@ type LiveChartProps = {
 type Timeframe = ChartTimeframe;
 
 const timeframeOptions: Timeframe[] = ["1m", "5m", "15m", "1h", "1d", "1w"];
-const CHART_REFRESH_MS = 100;
+const CHART_REFRESH_MS = 600;
 
 export function LiveChart({
   symbol,
@@ -299,6 +299,61 @@ export function LiveChart({
     }
   }
 
+  function applyLivePriceToChart(nextPrice: number, tickAt: string | null) {
+    const chart = chartRef.current;
+    const series = seriesRef.current;
+    const previousCandles = candleCacheRef.current;
+
+    if (!chart || !series || !previousCandles.length || !Number.isFinite(nextPrice)) {
+      return;
+    }
+
+    const candleTimeMs = tickAt ? new Date(tickAt).getTime() : Date.now();
+    const intervalSeconds = getCandleDurationMs(timeframe) / 1000;
+    const bucketTime = Math.floor(candleTimeMs / 1000 / intervalSeconds) * intervalSeconds;
+    const lastCandle = previousCandles.at(-1) ?? null;
+    const previousRange = visibleRangeRef.current;
+
+    if (!lastCandle) {
+      return;
+    }
+
+    let nextCandles = previousCandles;
+
+    const lastCandleTime = Number(lastCandle.time);
+
+    if (lastCandleTime === bucketTime) {
+      nextCandles = [
+        ...previousCandles.slice(0, -1),
+        {
+          ...lastCandle,
+          high: Math.max(lastCandle.high, nextPrice),
+          low: Math.min(lastCandle.low, nextPrice),
+          close: nextPrice
+        }
+      ];
+      series.update(nextCandles.at(-1)!);
+    } else if (lastCandleTime < bucketTime) {
+      const nextOpen = lastCandle.close;
+      nextCandles = [
+        ...previousCandles,
+        {
+          time: bucketTime as UTCTimestamp,
+          open: nextOpen,
+          high: Math.max(nextOpen, nextPrice),
+          low: Math.min(nextOpen, nextPrice),
+          close: nextPrice
+        }
+      ];
+      series.update(nextCandles.at(-1)!);
+    }
+
+    candleCacheRef.current = nextCandles;
+    if (previousRange) {
+      chart.timeScale().setVisibleLogicalRange(previousRange);
+    }
+  }
+
   useEffect(() => {
     const container = containerRef.current;
 
@@ -512,6 +567,32 @@ export function LiveChart({
       window.clearInterval(interval);
     };
   }, []);
+
+  useEffect(() => {
+    if (!live?.selectedInstrument || live.selectedInstrument.symbol !== activeSymbol) {
+      return;
+    }
+
+    const nextPrice = Number(live.selectedInstrument.price ?? 0);
+    const nextChange = Number(live.selectedInstrument.changeAmount ?? 0);
+
+    if (!Number.isFinite(nextPrice) || nextPrice <= 0) {
+      return;
+    }
+
+    setCurrentPrice(nextPrice);
+    currentPriceRef.current = nextPrice;
+    setCurrentChange(nextChange);
+    setLastTickAt(live.lastTickAt);
+    setFeedBadge(
+      live.feedStatus === "live"
+        ? "live"
+        : live.feedStatus === "stale"
+          ? "delayed"
+          : "simulated"
+    );
+    applyLivePriceToChart(nextPrice, live.lastTickAt);
+  }, [activeSymbol, live, timeframe]);
 
   useEffect(() => {
     if (!draggingLine || !seriesRef.current || !containerRef.current) {

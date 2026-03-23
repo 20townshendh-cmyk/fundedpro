@@ -102,7 +102,7 @@ async function setActiveDemoAccount(userId: string, requestedDemoAccountId: stri
   );
 }
 
-export async function getDemoTradingLiveState(userId: string, search?: Pick<TerminalSearch, "accountId">) {
+export async function getDemoTradingLiveState(userId: string, search?: Pick<TerminalSearch, "accountId" | "symbol">) {
   const db = getDb();
   await ensureDemoTradingWorkspaceForUser(userId);
   await advanceDemoMarket();
@@ -159,9 +159,49 @@ export async function getDemoTradingLiveState(userId: string, search?: Pick<Term
       )
     : { rows: [] };
 
+  const selectedInstrumentResult = await db.query<{
+    instrumentId: string;
+    symbol: string;
+    price: string | null;
+    changeAmount: string | null;
+    latestSource: string | null;
+    latestTickAt: Date | null;
+  }>(
+    `
+      SELECT
+        i."id" AS "instrumentId",
+        i."symbol",
+        pt."price"::text,
+        pt."changeAmount"::text,
+        pt."source" AS "latestSource",
+        pt."createdAt" AS "latestTickAt"
+      FROM "Instrument" i
+      LEFT JOIN LATERAL (
+        SELECT "price", "changeAmount", "source", "createdAt"
+        FROM "PriceTick"
+        WHERE "instrumentId" = i."id"
+        ORDER BY "createdAt" DESC
+        LIMIT 1
+      ) pt ON TRUE
+      WHERE i."symbol" = COALESCE($2, 'ES')
+      LIMIT 1
+    `,
+    [userId, search?.symbol ?? null]
+  );
+  const selectedInstrument = selectedInstrumentResult.rows[0] ?? null;
+  const selectedInstrumentFeedStatus = selectedInstrument
+    ? getFeedStatus({
+        latestSource: selectedInstrument.latestSource,
+        latestTickAt: selectedInstrument.latestTickAt
+      })
+    : "stale";
+
   return {
     activeAccount,
-    positions: positionsResult.rows
+    positions: positionsResult.rows,
+    selectedInstrument,
+    feedStatus: selectedInstrumentFeedStatus,
+    lastTickAt: selectedInstrument?.latestTickAt?.toISOString() ?? null
   };
 }
 

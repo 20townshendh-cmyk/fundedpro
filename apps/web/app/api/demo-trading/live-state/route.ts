@@ -14,7 +14,15 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const accountId = searchParams.get("accountId") ?? undefined;
-  const liveState = await getDemoTradingLiveState(session.userId, accountId ? { accountId } : undefined);
+  const symbol = searchParams.get("symbol") ?? undefined;
+  const search =
+    accountId || symbol
+      ? {
+          ...(accountId ? { accountId } : {}),
+          ...(symbol ? { symbol } : {})
+        }
+      : undefined;
+  const liveState = await getDemoTradingLiveState(session.userId, search);
 
   return NextResponse.json(
     liveState,

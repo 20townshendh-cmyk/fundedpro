@@ -23,20 +23,33 @@ type PositionRow = {
   unrealizedPnl: string;
 };
 
+type LiveInstrument = {
+  instrumentId: string;
+  symbol: string;
+  price: string | null;
+  changeAmount: string | null;
+  latestSource: string | null;
+  latestTickAt: string | Date | null;
+} | null;
+
 type TradeLiveState = {
   activeAccount: ActiveAccount;
   positions: PositionRow[];
+  selectedInstrument: LiveInstrument;
+  feedStatus: "live" | "simulated" | "stale";
+  lastTickAt: string | null;
 };
 
 const TradeLiveContext = createContext<TradeLiveState | null>(null);
 
 type TradeLiveProviderProps = {
   accountId: string | undefined;
+  symbol: string;
   initialState: TradeLiveState;
   children: ReactNode;
 };
 
-export function TradeLiveProvider({ accountId, initialState, children }: TradeLiveProviderProps) {
+export function TradeLiveProvider({ accountId, symbol, initialState, children }: TradeLiveProviderProps) {
   const [state, setState] = useState(initialState);
 
   useEffect(() => {
@@ -59,6 +72,7 @@ export function TradeLiveProvider({ accountId, initialState, children }: TradeLi
         if (accountId) {
           requestQuery.set("accountId", accountId);
         }
+        requestQuery.set("symbol", symbol);
         requestQuery.set("_ts", String(Date.now()));
         const response = await fetch(`/api/demo-trading/live-state?${requestQuery.toString()}`, { cache: "no-store" });
         if (!response.ok || cancelled) {
@@ -91,7 +105,7 @@ export function TradeLiveProvider({ accountId, initialState, children }: TradeLi
       window.removeEventListener(TRADE_LIVE_REFRESH_EVENT, handleRefreshEvent);
       window.clearInterval(interval);
     };
-  }, [accountId]);
+  }, [accountId, symbol]);
 
   return <TradeLiveContext.Provider value={state}>{children}</TradeLiveContext.Provider>;
 }
