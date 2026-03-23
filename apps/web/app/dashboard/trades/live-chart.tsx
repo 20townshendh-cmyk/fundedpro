@@ -37,6 +37,7 @@ type LiveChartProps = {
 type Timeframe = ChartTimeframe;
 
 const timeframeOptions: Timeframe[] = ["1m", "5m", "15m", "1h", "1d", "1w"];
+const CHART_REFRESH_MS = 100;
 
 export function LiveChart({
   symbol,
@@ -529,7 +530,7 @@ export function LiveChart({
         if (!cancelled) {
           timeoutId = window.setTimeout(() => {
             void refresh();
-          }, 250);
+          }, CHART_REFRESH_MS);
         }
       }
     }
