@@ -63,6 +63,7 @@ export function LiveChart({
   const visibleRangeRef = useRef<LogicalRange | null>(null);
   const candleCacheRef = useRef<CandlestickData[]>(toCandleData(initialCandles));
   const currentPriceRef = useRef(lastPrice);
+  const requestIdRef = useRef(0);
   const activePositionKeyRef = useRef<string | null>(null);
   const viewportKeyRef = useRef(`${symbol}:${initialTimeframe}`);
   const triggerLockRef = useRef<"tp" | "sl" | null>(null);
@@ -474,6 +475,22 @@ export function LiveChart({
     window.history.replaceState({}, "", nextUrl);
   }
 
+  function queueChartChange(nextSymbol: string, nextTimeframe: Timeframe) {
+    if (nextSymbol === activeSymbol && nextTimeframe === timeframe) {
+      return;
+    }
+
+    visibleRangeRef.current = null;
+    setIsLoading(true);
+    setFeedBadge("loading");
+    setEntryMenuOpen(false);
+    setPlacingProtection(null);
+    setOrderMessage(null);
+    setActiveSymbol(nextSymbol);
+    setTimeframe(nextTimeframe);
+    syncRoute(nextSymbol, nextTimeframe);
+  }
+
   useEffect(() => {
     const handleRefreshEvent = () => {
       setIsLoading(true);
@@ -675,6 +692,8 @@ export function LiveChart({
       }
 
       inFlight = true;
+      const requestId = requestIdRef.current + 1;
+      requestIdRef.current = requestId;
       activeController?.abort();
       activeController = new AbortController();
 
@@ -698,6 +717,10 @@ export function LiveChart({
           tickSource: "ninjatrader" | "simulated" | null;
           lastTickAt: string | null;
         };
+
+        if (requestId !== requestIdRef.current) {
+          return;
+        }
 
         applyIncomingData(data);
       } catch (error) {
@@ -740,12 +763,7 @@ export function LiveChart({
                   key={linkedSymbol}
                   type="button"
                   className={`trade-chip trade-symbol-chip${linkedSymbol === activeSymbol ? " active" : ""}`}
-                  onClick={() => {
-                    if (linkedSymbol === activeSymbol) return;
-                    setIsLoading(true);
-                    setActiveSymbol(linkedSymbol);
-                    syncRoute(linkedSymbol, timeframe);
-                  }}
+                  onClick={() => queueChartChange(linkedSymbol, timeframe)}
                 >
                   {linkedSymbol}
                 </button>
@@ -760,12 +778,7 @@ export function LiveChart({
                 key={option}
                 type="button"
                 className={`trade-chip${option === timeframe ? " active" : ""}`}
-                onClick={() => {
-                  if (option === timeframe) return;
-                  setIsLoading(true);
-                  setTimeframe(option);
-                  syncRoute(activeSymbol, option);
-                }}
+                onClick={() => queueChartChange(activeSymbol, option)}
               >
                 {option}
               </button>
@@ -866,38 +879,78 @@ export function LiveChart({
       {orderMessage ? <div className="trade-chart-order-message">{orderMessage}</div> : null}
       <div ref={containerRef} className="trade-chart-canvas">
         {hasActivePosition && entryPrice != null && lineTop(entryPrice) != null ? (
-          <button
-            type="button"
-            className={`trade-chart-line-handle entry-line${entryMenuOpen ? " active" : ""}`}
-            style={{ top: `${lineTop(entryPrice)}px` }}
-            onClick={() => {
-              setEntryMenuOpen((value) => !value);
-              setPlacingProtection(null);
-            }}
-          >
-            <span>{entryMenuOpen ? "Set TP / SL" : "Entry"}</span>
-            <strong>{formatLinePrice(entryPrice)}</strong>
-          </button>
+          <>
+            <div
+              className={`trade-chart-line-handle entry-line${entryMenuOpen ? " active" : ""}`}
+              style={{ top: `${lineTop(entryPrice)}px` }}
+            >
+              <button
+                type="button"
+                className={`trade-chart-line-pill entry${entryMenuOpen ? " active" : ""}`}
+                onClick={() => {
+                  setEntryMenuOpen((value) => !value);
+                  setPlacingProtection(null);
+                }}
+              >
+                <strong>{`Entry ${formatLinePrice(entryPrice)}`}</strong>
+              </button>
+            </div>
+            {entryMenuOpen ? (
+              <div
+                className="trade-chart-line-actions"
+                style={{ top: `${lineTop(entryPrice)}px` }}
+              >
+                <button
+                  type="button"
+                  className={`trade-chart-line-action${placingProtection === "tp" ? " active" : ""}`}
+                  onClick={() => {
+                    setPlacingProtection("tp");
+                    setOrderMessage("Click on the chart to place take profit.");
+                  }}
+                >
+                  Set TP
+                </button>
+                <button
+                  type="button"
+                  className={`trade-chart-line-action${placingProtection === "sl" ? " active" : ""}`}
+                  onClick={() => {
+                    setPlacingProtection("sl");
+                    setOrderMessage("Click on the chart to place stop loss.");
+                  }}
+                >
+                  Set SL
+                </button>
+              </div>
+            ) : null}
+          </>
         ) : null}
         {hasActivePosition && takeProfitPrice != null && lineTop(takeProfitPrice) != null ? (
-          <button
-            type="button"
+          <div
             className="trade-chart-line-handle take-profit"
             style={{ top: `${lineTop(takeProfitPrice)}px` }}
-            onMouseDown={() => setDraggingLine("tp")}
           >
-            <strong>TP {formatLinePrice(takeProfitPrice)}</strong>
-          </button>
+            <button
+              type="button"
+              className="trade-chart-line-pill"
+              onMouseDown={() => setDraggingLine("tp")}
+            >
+              <strong>TP {formatLinePrice(takeProfitPrice)}</strong>
+            </button>
+          </div>
         ) : null}
         {hasActivePosition && stopLossPrice != null && lineTop(stopLossPrice) != null ? (
-          <button
-            type="button"
+          <div
             className="trade-chart-line-handle stop-loss"
             style={{ top: `${lineTop(stopLossPrice)}px` }}
-            onMouseDown={() => setDraggingLine("sl")}
           >
-            <strong>SL {formatLinePrice(stopLossPrice)}</strong>
-          </button>
+            <button
+              type="button"
+              className="trade-chart-line-pill"
+              onMouseDown={() => setDraggingLine("sl")}
+            >
+              <strong>SL {formatLinePrice(stopLossPrice)}</strong>
+            </button>
+          </div>
         ) : null}
       </div>
     </div>

@@ -8452,8 +8452,8 @@ h6 {
 
 .trade-chart-line-handle {
   position: absolute;
-  left: 10px;
-  right: 10px;
+  left: 0;
+  right: 0;
   transform: translateY(-50%);
   height: 0;
   padding: 0;
@@ -8461,46 +8461,48 @@ h6 {
   border-top: 2px dashed currentColor;
   background: transparent;
   color: #e2e8f0;
-  cursor: ns-resize;
+  pointer-events: none;
   z-index: 3;
 }
 
-.trade-chart-line-handle span,
-.trade-chart-line-handle strong {
-  position: absolute;
-  top: -14px;
+.trade-chart-line-pill,
+.trade-chart-line-action {
+  pointer-events: auto;
   display: inline-flex;
   align-items: center;
-  height: 24px;
-  padding: 0 8px;
+  justify-content: center;
+  min-height: 28px;
+  padding: 0 10px;
   border-radius: 999px;
   font-size: 0.72rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-}
-
-.trade-chart-line-handle span {
-  left: 0;
-  background: rgba(15, 23, 42, 0.9);
-  border: 1px solid rgba(148, 163, 184, 0.25);
-}
-
-.trade-chart-line-handle strong {
-  right: 0;
+  font-weight: 700;
   background: rgba(15, 23, 42, 0.92);
   border: 1px solid currentColor;
-  font-weight: 700;
-  min-width: 88px;
-  justify-content: center;
+  color: inherit;
+}
+
+.trade-chart-line-pill {
+  position: absolute;
+  top: -14px;
+  right: 12px;
+  min-width: 96px;
+  cursor: ns-resize;
+}
+
+.trade-chart-line-pill strong,
+.trade-chart-line-action {
+  font: inherit;
+}
+
+.trade-chart-line-pill.entry {
+  cursor: pointer;
+  min-width: 132px;
 }
 
 .trade-chart-line-handle.take-profit {
   color: #22c55e;
-}
-
-.trade-chart-line-handle.take-profit span,
-.trade-chart-line-handle.stop-loss span {
-  display: none;
 }
 
 .trade-chart-line-handle.stop-loss {
@@ -8509,12 +8511,38 @@ h6 {
 
 .trade-chart-line-handle.entry-line {
   color: #f97316;
-  cursor: pointer;
 }
 
 .trade-chart-line-handle.entry-line.active {
   color: #fb923c;
   border-top-style: solid;
+}
+
+.trade-chart-line-pill.entry.active {
+  background: rgba(124, 45, 18, 0.92);
+}
+
+.trade-chart-line-actions {
+  position: absolute;
+  right: 156px;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 4;
+}
+
+.trade-chart-line-action {
+  min-width: 76px;
+  cursor: pointer;
+  border-color: rgba(148, 163, 184, 0.24);
+  color: #dbe5f0;
+}
+
+.trade-chart-line-action.active {
+  border-color: #f97316;
+  color: #f97316;
+  background: rgba(124, 45, 18, 0.9);
 }
 
 .trade-symbol-chip {
