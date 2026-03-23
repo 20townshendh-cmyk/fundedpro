@@ -569,6 +569,7 @@ export function LiveChart({
     let cancelled = false;
     let inFlight = false;
     let timeoutId: number | null = null;
+    let activeController: AbortController | null = null;
     const requestViewportKey = `${activeSymbol}:${timeframe}`;
 
     function applyIncomingData(data: {
@@ -602,9 +603,17 @@ export function LiveChart({
       }
 
       inFlight = true;
+      activeController?.abort();
+      activeController = new AbortController();
 
       try {
-        const response = await fetch(`/api/demo-trading/chart?symbol=${encodeURIComponent(activeSymbol)}&timeframe=${encodeURIComponent(timeframe)}`, { cache: "no-store" });
+        const response = await fetch(
+          `/api/demo-trading/chart?symbol=${encodeURIComponent(activeSymbol)}&timeframe=${encodeURIComponent(timeframe)}&_ts=${Date.now()}`,
+          {
+            cache: "no-store",
+            signal: activeController.signal
+          }
+        );
 
         if (!response.ok || cancelled) {
           return;
@@ -619,6 +628,10 @@ export function LiveChart({
         };
 
         applyIncomingData(data);
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
       } finally {
         inFlight = false;
         if (!cancelled) {
@@ -637,6 +650,7 @@ export function LiveChart({
 
     return () => {
       cancelled = true;
+      activeController?.abort();
       if (timeoutId !== null) {
         window.clearTimeout(timeoutId);
       }

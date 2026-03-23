@@ -21,7 +21,7 @@ function formatUsd(value: string | number | null | undefined) {
   return Number(value ?? 0).toLocaleString("en-US", { style: "currency", currency: "USD" });
 }
 
-function useSmoothedNumber(value: string | number | null | undefined, duration = 140) {
+function useSmoothedNumber(value: string | number | null | undefined, duration = 80) {
   const target = Number(value ?? 0);
   const [displayValue, setDisplayValue] = useState(target);
   const frameRef = useRef<number | null>(null);
@@ -29,6 +29,11 @@ function useSmoothedNumber(value: string | number | null | undefined, duration =
   const startedAtRef = useRef(0);
 
   useEffect(() => {
+    if (Math.abs(target - displayValue) < 0.01) {
+      setDisplayValue(target);
+      return;
+    }
+
     if (frameRef.current !== null) {
       cancelAnimationFrame(frameRef.current);
       frameRef.current = null;
