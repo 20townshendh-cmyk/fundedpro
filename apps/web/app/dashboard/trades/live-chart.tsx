@@ -59,6 +59,7 @@ export function LiveChart({
   const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const priceLineRef = useRef<IPriceLine | null>(null);
   const currentPriceRef = useRef(lastPrice);
+  const activePositionKeyRef = useRef<string | null>(null);
   const viewportKeyRef = useRef(`${symbol}:${initialTimeframe}`);
   const triggerLockRef = useRef<"tp" | "sl" | null>(null);
   const [activeSymbol, setActiveSymbol] = useState(symbol);
@@ -235,6 +236,7 @@ export function LiveChart({
 
   useEffect(() => {
     if (!activePosition) {
+      activePositionKeyRef.current = null;
       setTakeProfitPrice(null);
       setStopLossPrice(null);
       setPlacingProtection(null);
@@ -243,17 +245,22 @@ export function LiveChart({
       return;
     }
 
-    const nextEntry = Number(activePosition.averageEntryPrice);
-    const nextLast = Number(activePosition.lastPrice || currentPriceRef.current || nextEntry);
-    const distance = Math.max(4, Math.abs(nextLast - nextEntry) || nextEntry * 0.0025);
+    const nextPositionKey = [
+      activePosition.symbol,
+      activePosition.side,
+      activePosition.quantity,
+      activePosition.averageEntryPrice
+    ].join(":");
 
-    if (activePosition.side === "LONG") {
-      setTakeProfitPrice((current) => current ?? normalizeProtectionPrice("tp", nextEntry + distance));
-      setStopLossPrice((current) => current ?? normalizeProtectionPrice("sl", nextEntry - distance));
-    } else {
-      setTakeProfitPrice((current) => current ?? normalizeProtectionPrice("tp", nextEntry - distance));
-      setStopLossPrice((current) => current ?? normalizeProtectionPrice("sl", nextEntry + distance));
+    if (activePositionKeyRef.current !== nextPositionKey) {
+      activePositionKeyRef.current = nextPositionKey;
+      setTakeProfitPrice(null);
+      setStopLossPrice(null);
+      setPlacingProtection(null);
+      setEntryMenuOpen(false);
+      setOrderMessage(null);
     }
+
     triggerLockRef.current = null;
   }, [activePosition?.symbol, activePosition?.side, activePosition?.quantity, activePosition?.averageEntryPrice]);
 
@@ -611,8 +618,12 @@ export function LiveChart({
             >
               Entry {formatLinePrice(entryPrice)}
             </button>
-            <span className="trade-data-badge live">TP {formatLinePrice(takeProfitPrice)}</span>
-            <span className="trade-data-badge delayed">SL {formatLinePrice(stopLossPrice)}</span>
+            <span className={`trade-data-badge${takeProfitPrice != null ? " live" : " simulated"}`}>
+              {takeProfitPrice != null ? `TP ${formatLinePrice(takeProfitPrice)}` : "TP not set"}
+            </span>
+            <span className={`trade-data-badge${stopLossPrice != null ? " delayed" : " simulated"}`}>
+              {stopLossPrice != null ? `SL ${formatLinePrice(stopLossPrice)}` : "SL not set"}
+            </span>
           </div>
           <div className="trade-chart-protection-actions">
             {entryMenuOpen ? (
@@ -639,41 +650,32 @@ export function LiveChart({
                 </button>
               </>
             ) : null}
-            <button
-              type="button"
-              className="trade-chip"
-              onClick={() => {
-                if (!entryPrice || !positionSide) return;
-                const distance = Math.max(4, Math.abs(currentPrice - entryPrice) || entryPrice * 0.0025);
-                setTakeProfitPrice(normalizeProtectionPrice("tp", positionSide === "LONG" ? entryPrice + distance : entryPrice - distance));
-              }}
-            >
-              Reset TP
-            </button>
-            <button
-              type="button"
-              className="trade-chip"
-              onClick={() => {
-                if (!entryPrice || !positionSide) return;
-                const distance = Math.max(4, Math.abs(currentPrice - entryPrice) || entryPrice * 0.0025);
-                setStopLossPrice(normalizeProtectionPrice("sl", positionSide === "LONG" ? entryPrice - distance : entryPrice + distance));
-              }}
-            >
-              Reset SL
-            </button>
-            <button
-              type="button"
-              className="trade-chip"
-              onClick={() => {
-                setTakeProfitPrice(null);
-                setStopLossPrice(null);
-                setPlacingProtection(null);
-                setEntryMenuOpen(false);
-                triggerLockRef.current = null;
-              }}
-            >
-              Clear
-            </button>
+            {takeProfitPrice != null ? (
+              <button
+                type="button"
+                className="trade-chip"
+                onClick={() => {
+                  setTakeProfitPrice(null);
+                  setPlacingProtection(null);
+                  triggerLockRef.current = null;
+                }}
+              >
+                Clear TP
+              </button>
+            ) : null}
+            {stopLossPrice != null ? (
+              <button
+                type="button"
+                className="trade-chip"
+                onClick={() => {
+                  setStopLossPrice(null);
+                  setPlacingProtection(null);
+                  triggerLockRef.current = null;
+                }}
+              >
+                Clear SL
+              </button>
+            ) : null}
           </div>
         </div>
       ) : null}
@@ -689,7 +691,7 @@ export function LiveChart({
               setPlacingProtection(null);
             }}
           >
-            <span>{placingProtection ? `Place ${placingProtection.toUpperCase()}` : "Entry"}</span>
+            <span>{entryMenuOpen ? "Set TP / SL" : "Entry"}</span>
             <strong>{formatLinePrice(entryPrice)}</strong>
           </button>
         ) : null}
