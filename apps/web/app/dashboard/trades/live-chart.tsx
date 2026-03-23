@@ -1,7 +1,6 @@
 "use client";
 
 import { startTransition, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   createChart,
   ColorType,
@@ -56,7 +55,6 @@ export function LiveChart({
   layout = "focus",
   instruments = []
 }: LiveChartProps) {
-  const router = useRouter();
   const live = useTradeLiveContext();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -75,6 +73,7 @@ export function LiveChart({
   const [isLoading, setIsLoading] = useState(false);
   const [feedBadge, setFeedBadge] = useState<"live" | "simulated" | "delayed" | "loading">("loading");
   const [lastTickAt, setLastTickAt] = useState<string | null>(null);
+  const [nowMs, setNowMs] = useState(() => Date.now());
   const [takeProfitPrice, setTakeProfitPrice] = useState<number | null>(null);
   const [stopLossPrice, setStopLossPrice] = useState<number | null>(null);
   const [draggingLine, setDraggingLine] = useState<"tp" | "sl" | null>(null);
@@ -130,6 +129,69 @@ export function LiveChart({
     const coordinate = seriesRef.current.priceToCoordinate(price);
     return typeof coordinate === "number" && Number.isFinite(coordinate) ? coordinate : null;
   }
+
+  function getCandleDurationMs(selectedTimeframe: Timeframe) {
+    switch (selectedTimeframe) {
+      case "1m":
+        return 60_000;
+      case "5m":
+        return 5 * 60_000;
+      case "15m":
+        return 15 * 60_000;
+      case "1h":
+        return 60 * 60_000;
+      case "1d":
+        return 24 * 60 * 60_000;
+      case "1w":
+        return 7 * 24 * 60 * 60_000;
+      default:
+        return 60_000;
+    }
+  }
+
+  function getNextCandleCloseMs(selectedTimeframe: Timeframe, currentMs: number) {
+    const date = new Date(currentMs);
+
+    switch (selectedTimeframe) {
+      case "1m":
+      case "5m":
+      case "15m":
+      case "1h": {
+        const durationMs = getCandleDurationMs(selectedTimeframe);
+        return Math.floor(currentMs / durationMs) * durationMs + durationMs;
+      }
+      case "1d": {
+        const next = new Date(date);
+        next.setUTCHours(24, 0, 0, 0);
+        return next.getTime();
+      }
+      case "1w": {
+        const next = new Date(date);
+        const day = next.getUTCDay();
+        const daysUntilMonday = (8 - day) % 7 || 7;
+        next.setUTCDate(next.getUTCDate() + daysUntilMonday);
+        next.setUTCHours(0, 0, 0, 0);
+        return next.getTime();
+      }
+      default:
+        return currentMs + 60_000;
+    }
+  }
+
+  function formatCountdown(msRemaining: number) {
+    const totalSeconds = Math.max(0, Math.floor(msRemaining / 1000));
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    if (hours > 0) {
+      return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    }
+
+    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  }
+
+  const candleCountdown = formatCountdown(getNextCandleCloseMs(timeframe, nowMs) - nowMs);
 
   function normalizeCandles(candles: DemoCandle[]) {
     return [...candles]
@@ -409,7 +471,7 @@ export function LiveChart({
 
   function syncRoute(nextSymbol: string, nextTimeframe: Timeframe) {
     const nextUrl = `/dashboard/trades?symbol=${encodeURIComponent(nextSymbol)}&timeframe=${encodeURIComponent(nextTimeframe)}${baseQuery}`;
-    router.replace(nextUrl, { scroll: false });
+    window.history.replaceState({}, "", nextUrl);
   }
 
   useEffect(() => {
@@ -421,6 +483,16 @@ export function LiveChart({
 
     return () => {
       window.removeEventListener(TRADE_LIVE_REFRESH_EVENT, handleRefreshEvent);
+    };
+  }, []);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setNowMs(Date.now());
+    }, 1000);
+
+    return () => {
+      window.clearInterval(interval);
     };
   }, []);
 
@@ -710,6 +782,7 @@ export function LiveChart({
               Updated {new Date(lastTickAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
             </span>
           ) : null}
+          <span className="trade-data-badge entry">{candleCountdown} left</span>
           <strong>{currentPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
           <span className={currentChange >= 0 ? "positive" : "negative"}>
             {currentChange.toLocaleString("en-US", { signDisplay: "always", minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -813,8 +886,7 @@ export function LiveChart({
             style={{ top: `${lineTop(takeProfitPrice)}px` }}
             onMouseDown={() => setDraggingLine("tp")}
           >
-            <span>TP</span>
-            <strong>{formatLinePrice(takeProfitPrice)}</strong>
+            <strong>TP {formatLinePrice(takeProfitPrice)}</strong>
           </button>
         ) : null}
         {hasActivePosition && stopLossPrice != null && lineTop(stopLossPrice) != null ? (
@@ -824,8 +896,7 @@ export function LiveChart({
             style={{ top: `${lineTop(stopLossPrice)}px` }}
             onMouseDown={() => setDraggingLine("sl")}
           >
-            <span>SL</span>
-            <strong>{formatLinePrice(stopLossPrice)}</strong>
+            <strong>SL {formatLinePrice(stopLossPrice)}</strong>
           </button>
         ) : null}
       </div>

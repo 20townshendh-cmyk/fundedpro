@@ -8490,10 +8490,17 @@ h6 {
   background: rgba(15, 23, 42, 0.92);
   border: 1px solid currentColor;
   font-weight: 700;
+  min-width: 88px;
+  justify-content: center;
 }
 
 .trade-chart-line-handle.take-profit {
   color: #22c55e;
+}
+
+.trade-chart-line-handle.take-profit span,
+.trade-chart-line-handle.stop-loss span {
+  display: none;
 }
 
 .trade-chart-line-handle.stop-loss {
