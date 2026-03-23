@@ -331,6 +331,10 @@ export default async function TradeNowPage({ searchParams }: TradeNowPageProps) 
                         initialTimeframe={timeframe}
                         compact
                         baseQuery={chartBaseQuery}
+                        demoAccountId={terminal.activeAccount?.id}
+                        accountId={filters.accountId}
+                        layout={layout}
+                        instruments={quickSymbols.map((item) => ({ symbol: item.symbol, instrumentId: item.instrumentId }))}
                       />
                       <LiveChart
                         symbol={secondarySymbol}
@@ -342,6 +346,10 @@ export default async function TradeNowPage({ searchParams }: TradeNowPageProps) 
                         compact
                         showLinkedSymbols={false}
                         baseQuery={chartBaseQuery}
+                        demoAccountId={terminal.activeAccount?.id}
+                        accountId={filters.accountId}
+                        layout={layout}
+                        instruments={quickSymbols.map((item) => ({ symbol: item.symbol, instrumentId: item.instrumentId }))}
                       />
                     </div>
                   ) : (
@@ -353,6 +361,10 @@ export default async function TradeNowPage({ searchParams }: TradeNowPageProps) 
                       linkedSymbols={quickSymbols.map((item) => item.symbol)}
                       initialTimeframe={timeframe}
                       baseQuery={chartBaseQuery}
+                      demoAccountId={terminal.activeAccount?.id}
+                      accountId={filters.accountId}
+                      layout={layout}
+                      instruments={quickSymbols.map((item) => ({ symbol: item.symbol, instrumentId: item.instrumentId }))}
                     />
                   )}
                 </div>

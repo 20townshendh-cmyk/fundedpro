@@ -1,9 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { startTransition, useState } from "react";
 import { submitDemoOrderAction } from "../../../lib/demo-trading/actions";
 import { TradeConfirmAction } from "./trade-confirm-action";
+import { emitTradeLiveRefresh } from "./trade-live-events";
 
 type ClosePositionButtonProps = {
   demoAccountId: string;
@@ -40,7 +40,6 @@ export function ClosePositionButton({
   confirmTone = "danger",
   className = "trade-close-button"
 }: ClosePositionButtonProps) {
-  const router = useRouter();
   const [isPending, setIsPending] = useState(false);
   const [messageText, setMessageText] = useState<string | null>(null);
 
@@ -81,8 +80,9 @@ export function ClosePositionButton({
                       ? "Execution price is stale. Wait for a fresh tick before sending a market order."
                       : "Order was rejected. Check buying power and inputs."
                 );
+              } else {
+                emitTradeLiveRefresh();
               }
-              router.refresh();
               setIsPending(false);
               resolve();
             });

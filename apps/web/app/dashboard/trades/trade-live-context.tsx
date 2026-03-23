@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { TRADE_LIVE_REFRESH_EVENT } from "./trade-live-events";
 
 type ActiveAccount = {
   accountName: string;
@@ -95,6 +96,12 @@ export function TradeLiveProvider({ accountId, initialState, children }: TradeLi
       void refresh();
     }
 
+    const handleRefreshEvent = () => {
+      void refresh();
+    };
+
+    window.addEventListener(TRADE_LIVE_REFRESH_EVENT, handleRefreshEvent);
+
     const interval = window.setInterval(() => {
       if (!eventSource) {
         void refresh();
@@ -104,6 +111,7 @@ export function TradeLiveProvider({ accountId, initialState, children }: TradeLi
     return () => {
       cancelled = true;
       eventSource?.close();
+      window.removeEventListener(TRADE_LIVE_REFRESH_EVENT, handleRefreshEvent);
       window.clearInterval(interval);
     };
   }, [accountId]);

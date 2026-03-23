@@ -1,8 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { startTransition, useState } from "react";
 import { submitDemoOrderAction } from "../../../lib/demo-trading/actions";
+import { emitTradeLiveRefresh } from "./trade-live-events";
 
 type DepthRow = {
   price: number;
@@ -38,7 +38,6 @@ export function TradeTerminalControls({
   layout,
   tradingLockedReason
 }: TradeTerminalControlsProps) {
-  const router = useRouter();
   const [orderType, setOrderType] = useState<"MARKET" | "LIMIT">("MARKET");
   const [side, setSide] = useState<"BUY" | "SELL">("BUY");
   const [quantity, setQuantity] = useState("1");
@@ -72,10 +71,11 @@ export function TradeTerminalControls({
               ? "Account breached. New trade entry is disabled."
               : result.error === "price-stale"
                 ? "Execution price is stale. Wait for a fresh tick before sending a market order."
-              : "Order was rejected. Check buying power and inputs."
+                : "Order was rejected. Check buying power and inputs."
         );
+      } else {
+        emitTradeLiveRefresh();
       }
-      router.refresh();
       setIsPending(false);
     });
   }

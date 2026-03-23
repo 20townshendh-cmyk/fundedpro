@@ -32,13 +32,35 @@ function getYahooRange(timeframe: ChartTimeframe) {
     case "15m":
       return { interval: "15m", range: "60d" };
     case "1h":
-      return { interval: "60m", range: "2y" };
+      return { interval: "60m", range: "730d" };
     case "1d":
-      return { interval: "1d", range: "4y" };
+      return { interval: "1d", range: "5y" };
     case "1w":
-      return { interval: "1wk", range: "4y" };
+      return { interval: "1wk", range: "5y" };
     default:
       return { interval: "5m", range: "60d" };
+  }
+}
+
+function trimCandlesToRecentWindow(candles: DemoCandle[], timeframe: ChartTimeframe) {
+  if (!candles.length) {
+    return candles;
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+
+  switch (timeframe) {
+    case "1d":
+    case "1w": {
+      const minTime = now - 1095 * 24 * 60 * 60;
+      return candles.filter((candle) => candle.time >= minTime);
+    }
+    case "1h": {
+      const minTime = now - 730 * 24 * 60 * 60;
+      return candles.filter((candle) => candle.time >= minTime);
+    }
+    default:
+      return candles;
   }
 }
 
@@ -176,12 +198,14 @@ export async function getDelayedSnapshot(symbol: string, timeframe: ChartTimefra
       });
     }
 
-    if (!candles.length) {
+    const trimmedCandles = trimCandlesToRecentWindow(candles, timeframe);
+
+    if (!trimmedCandles.length) {
       return getCmeFallbackSnapshot(symbol);
     }
 
-    const price = result.meta?.regularMarketPrice ?? candles[candles.length - 1]!.close;
-    const previousClose = result.meta?.chartPreviousClose ?? candles[0]!.open;
+    const price = result.meta?.regularMarketPrice ?? trimmedCandles[trimmedCandles.length - 1]!.close;
+    const previousClose = result.meta?.chartPreviousClose ?? trimmedCandles[0]!.open;
     const changeAmount = Number((price - previousClose).toFixed(2));
     const changePct = Number((((price - previousClose) / Math.max(previousClose, 1)) * 100).toFixed(2));
 
@@ -190,7 +214,7 @@ export async function getDelayedSnapshot(symbol: string, timeframe: ChartTimefra
       price,
       changeAmount,
       changePct,
-      candles
+      candles: trimmedCandles
     };
   } catch {
     return getCmeFallbackSnapshot(symbol);

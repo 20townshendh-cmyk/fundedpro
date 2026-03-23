@@ -40,6 +40,41 @@ describe("market data", () => {
     expect(getDelayedSnapshot).not.toHaveBeenCalled();
   });
 
+  it("uses deeper delayed history for higher timeframes while keeping internal live price", async () => {
+    query
+      .mockResolvedValueOnce({
+        rows: [{ instrumentId: "inst-1" }]
+      })
+      .mockResolvedValueOnce({
+        rows: [
+          { price: "5200.00", createdAt: new Date("2026-03-20T10:00:00.000Z"), source: "simulated" },
+          { price: "5205.00", createdAt: new Date("2026-03-21T10:00:00.000Z"), source: "simulated" }
+        ]
+      });
+
+    getDelayedSnapshot.mockResolvedValueOnce({
+      symbol: "ES",
+      price: 5000,
+      changeAmount: 10,
+      changePct: 0.2,
+      candles: Array.from({ length: 300 }, (_, index) => ({
+        time: index + 1,
+        open: 1,
+        high: 2,
+        low: 1,
+        close: 2,
+        volume: 10
+      }))
+    });
+
+    const result = await getChartFeed({ symbol: "ES", timeframe: "1d" });
+
+    expect(result.source).toBe("HYBRID");
+    expect(result.lastPrice).toBe(5205);
+    expect(result.tickSource).toBe("simulated");
+    expect(result.candles).toHaveLength(300);
+  });
+
   it("prefers delayed external data for supported chart symbols", async () => {
     query
       .mockResolvedValueOnce({

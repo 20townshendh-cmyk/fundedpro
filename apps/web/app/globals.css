@@ -8374,6 +8374,7 @@ h6 {
 .trade-chart-canvas {
   width: 100%;
   height: 530px;
+  position: relative;
 }
 
 .trade-chart-live {
@@ -8423,6 +8424,90 @@ h6 {
   color: #fff;
   font-size: 0.76rem;
   letter-spacing: 0.02em;
+}
+
+.trade-chart-protection-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 6px 10px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+  background: #050607;
+}
+
+.trade-chart-protection-meta,
+.trade-chart-protection-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.trade-chart-order-message {
+  margin: 0 6px 10px;
+  color: #cbd5e1;
+  font-size: 0.82rem;
+}
+
+.trade-chart-line-handle {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  transform: translateY(-50%);
+  height: 0;
+  padding: 0;
+  border: 0;
+  border-top: 2px dashed currentColor;
+  background: transparent;
+  color: #e2e8f0;
+  cursor: ns-resize;
+  z-index: 3;
+}
+
+.trade-chart-line-handle span,
+.trade-chart-line-handle strong {
+  position: absolute;
+  top: -14px;
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.trade-chart-line-handle span {
+  left: 0;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.trade-chart-line-handle strong {
+  right: 0;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid currentColor;
+  font-weight: 700;
+}
+
+.trade-chart-line-handle.take-profit {
+  color: #22c55e;
+}
+
+.trade-chart-line-handle.stop-loss {
+  color: #f43f5e;
+}
+
+.trade-chart-line-handle.entry-line {
+  color: #f97316;
+  cursor: pointer;
+}
+
+.trade-chart-line-handle.entry-line.active {
+  color: #fb923c;
+  border-top-style: solid;
 }
 
 .trade-symbol-chip {
@@ -8479,6 +8564,18 @@ h6 {
   background: rgba(34, 197, 94, 0.16);
   color: #bbf7d0;
   border: 1px solid rgba(34, 197, 94, 0.32);
+}
+
+.trade-data-badge.entry {
+  background: rgba(249, 115, 22, 0.16);
+  color: #fdba74;
+  border: 1px solid rgba(249, 115, 22, 0.34);
+  cursor: pointer;
+}
+
+.trade-data-badge.entry.active {
+  background: rgba(249, 115, 22, 0.26);
+  color: #fff7ed;
 }
 
 .trade-data-badge.simulated {
@@ -8644,7 +8741,7 @@ h6 {
 .trade-position-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
   justify-content: flex-end;
 }
