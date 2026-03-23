@@ -459,7 +459,6 @@ export function LiveChart({
     let cancelled = false;
     let inFlight = false;
     let timeoutId: number | null = null;
-    let eventSource: EventSource | null = null;
     const requestViewportKey = `${activeSymbol}:${timeframe}`;
 
     function applyIncomingData(data: {
@@ -497,7 +496,6 @@ export function LiveChart({
       }
 
       inFlight = true;
-      setIsLoading(true);
 
       try {
         const response = await fetch(`/api/demo-trading/chart?symbol=${encodeURIComponent(activeSymbol)}&timeframe=${encodeURIComponent(timeframe)}`, { cache: "no-store" });
@@ -528,33 +526,11 @@ export function LiveChart({
         }
       }
     }
-
-    try {
-      eventSource = new EventSource(`/api/demo-trading/chart/stream?symbol=${encodeURIComponent(activeSymbol)}&timeframe=${encodeURIComponent(timeframe)}`);
-      setIsLoading(true);
-      eventSource.onmessage = (event) => {
-        const data = JSON.parse(event.data) as {
-          candles: DemoCandle[];
-          lastPrice: number;
-          source: "INTERNAL" | "DELAYED_EXTERNAL" | "HYBRID" | "EMPTY";
-          tickSource: "ninjatrader" | "simulated" | null;
-          lastTickAt: string | null;
-        };
-        applyIncomingData(data);
-        setIsLoading(false);
-      };
-      eventSource.onerror = () => {
-        eventSource?.close();
-        eventSource = null;
-        void refresh();
-      };
-    } catch {
-      void refresh();
-    }
+    setIsLoading(true);
+    void refresh();
 
     return () => {
       cancelled = true;
-      eventSource?.close();
       if (timeoutId !== null) {
         window.clearTimeout(timeoutId);
       }
@@ -575,6 +551,7 @@ export function LiveChart({
                   onClick={() => {
                     if (linkedSymbol === activeSymbol) return;
                     startTransition(() => {
+                      setIsLoading(true);
                       setActiveSymbol(linkedSymbol);
                     });
                   }}
@@ -595,6 +572,7 @@ export function LiveChart({
                 onClick={() => {
                   if (option === timeframe) return;
                   startTransition(() => {
+                    setIsLoading(true);
                     setTimeframe(option);
                   });
                 }}

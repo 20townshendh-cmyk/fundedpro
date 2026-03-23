@@ -46,10 +46,9 @@ export function TradeLiveProvider({ accountId, initialState, children }: TradeLi
   useEffect(() => {
     let cancelled = false;
     let inFlight = false;
-    let eventSource: EventSource | null = null;
 
     const refresh = async () => {
-      if (inFlight) {
+      if (cancelled || inFlight) {
         return;
       }
 
@@ -75,26 +74,7 @@ export function TradeLiveProvider({ accountId, initialState, children }: TradeLi
       }
     };
 
-    try {
-      const requestQuery = new URLSearchParams();
-      if (accountId) {
-        requestQuery.set("accountId", accountId);
-      }
-      eventSource = new EventSource(`/api/demo-trading/live-state/stream?${requestQuery.toString()}`);
-      eventSource.onmessage = (event) => {
-        const next = JSON.parse(event.data) as TradeLiveState;
-        if (!cancelled) {
-          setState(next);
-        }
-      };
-      eventSource.onerror = () => {
-        eventSource?.close();
-        eventSource = null;
-        void refresh();
-      };
-    } catch {
-      void refresh();
-    }
+    void refresh();
 
     const handleRefreshEvent = () => {
       void refresh();
@@ -103,14 +83,11 @@ export function TradeLiveProvider({ accountId, initialState, children }: TradeLi
     window.addEventListener(TRADE_LIVE_REFRESH_EVENT, handleRefreshEvent);
 
     const interval = window.setInterval(() => {
-      if (!eventSource) {
-        void refresh();
-      }
+      void refresh();
     }, 100);
 
     return () => {
       cancelled = true;
-      eventSource?.close();
       window.removeEventListener(TRADE_LIVE_REFRESH_EVENT, handleRefreshEvent);
       window.clearInterval(interval);
     };
