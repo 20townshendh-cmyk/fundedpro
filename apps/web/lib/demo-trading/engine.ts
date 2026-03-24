@@ -419,23 +419,43 @@ async function applyFill(
   let realizedPnl = 0;
 
   if (!existingPosition) {
-    await client.query(
-      `
-        INSERT INTO "DemoPosition" (
-          "id", "userId", "demoAccountId", "instrumentId", "side", "quantity", "averageEntryPrice", "lastPrice", "takeProfitPrice", "stopLossPrice", "realizedPnl", "unrealizedPnl", "openedAt", "createdAt", "updatedAt"
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $7, NULL, NULL, 0, 0, NOW(), NOW(), NOW())
-      `,
-      [
-        randomUUID(),
-        input.order.userId,
-        input.order.demoAccountId,
-        input.instrument.instrumentId,
-        orderSide,
-        quantity,
-        input.fillPrice
-      ]
-    );
+    if (hasProtectionColumns) {
+      await client.query(
+        `
+          INSERT INTO "DemoPosition" (
+            "id", "userId", "demoAccountId", "instrumentId", "side", "quantity", "averageEntryPrice", "lastPrice", "takeProfitPrice", "stopLossPrice", "realizedPnl", "unrealizedPnl", "openedAt", "createdAt", "updatedAt"
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $7, NULL, NULL, 0, 0, NOW(), NOW(), NOW())
+        `,
+        [
+          randomUUID(),
+          input.order.userId,
+          input.order.demoAccountId,
+          input.instrument.instrumentId,
+          orderSide,
+          quantity,
+          input.fillPrice
+        ]
+      );
+    } else {
+      await client.query(
+        `
+          INSERT INTO "DemoPosition" (
+            "id", "userId", "demoAccountId", "instrumentId", "side", "quantity", "averageEntryPrice", "lastPrice", "realizedPnl", "unrealizedPnl", "openedAt", "createdAt", "updatedAt"
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $7, 0, 0, NOW(), NOW(), NOW())
+        `,
+        [
+          randomUUID(),
+          input.order.userId,
+          input.order.demoAccountId,
+          input.instrument.instrumentId,
+          orderSide,
+          quantity,
+          input.fillPrice
+        ]
+      );
+    }
   } else if (existingPosition.side === orderSide) {
     const newQuantity = existingPosition.quantity + quantity;
     const nextAverage = Number(
@@ -477,14 +497,25 @@ async function applyFill(
         [remainingPositionQuantity, input.fillPrice, existingPosition.id]
       );
     } else if (leftoverOrderQuantity > 0) {
-      await client.query(
-        `
-          UPDATE "DemoPosition"
-          SET "side" = $1, "quantity" = $2, "averageEntryPrice" = $3, "lastPrice" = $3, "takeProfitPrice" = NULL, "stopLossPrice" = NULL, "updatedAt" = NOW()
-          WHERE "id" = $4
-        `,
-        [orderSide, leftoverOrderQuantity, input.fillPrice, existingPosition.id]
-      );
+      if (hasProtectionColumns) {
+        await client.query(
+          `
+            UPDATE "DemoPosition"
+            SET "side" = $1, "quantity" = $2, "averageEntryPrice" = $3, "lastPrice" = $3, "takeProfitPrice" = NULL, "stopLossPrice" = NULL, "updatedAt" = NOW()
+            WHERE "id" = $4
+          `,
+          [orderSide, leftoverOrderQuantity, input.fillPrice, existingPosition.id]
+        );
+      } else {
+        await client.query(
+          `
+            UPDATE "DemoPosition"
+            SET "side" = $1, "quantity" = $2, "averageEntryPrice" = $3, "lastPrice" = $3, "updatedAt" = NOW()
+            WHERE "id" = $4
+          `,
+          [orderSide, leftoverOrderQuantity, input.fillPrice, existingPosition.id]
+        );
+      }
     } else {
       await client.query('DELETE FROM "DemoPosition" WHERE "id" = $1', [existingPosition.id]);
     }
