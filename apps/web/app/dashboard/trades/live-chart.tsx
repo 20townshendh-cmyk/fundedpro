@@ -740,6 +740,8 @@ export function LiveChart({
     let inFlight = false;
     let timeoutId: number | null = null;
     let activeController: AbortController | null = null;
+    let streamSource: EventSource | null = null;
+    let streamHealthy = false;
     const requestViewportKey = `${activeSymbol}:${timeframe}`;
 
     function applyIncomingData(data: {
@@ -822,10 +824,56 @@ export function LiveChart({
       }
     }
     setIsLoading(true);
-    void refresh();
+
+    try {
+      streamSource = new EventSource(
+        `/api/demo-trading/chart/stream?symbol=${encodeURIComponent(activeSymbol)}&timeframe=${encodeURIComponent(timeframe)}`
+      );
+      streamSource.onmessage = (event) => {
+        if (cancelled) {
+          return;
+        }
+
+        try {
+          const data = JSON.parse(event.data) as {
+            candles: DemoCandle[];
+            lastPrice: number;
+            source: "INTERNAL" | "DELAYED_EXTERNAL" | "HYBRID" | "EMPTY";
+            tickSource: "ninjatrader" | "simulated" | null;
+            lastTickAt: string | null;
+          };
+          streamHealthy = true;
+          applyIncomingData(data);
+          setIsLoading(false);
+        } catch {
+          // fall back to polling below
+        }
+      };
+      streamSource.onerror = () => {
+        streamHealthy = false;
+        streamSource?.close();
+        streamSource = null;
+        if (!cancelled && timeoutId === null) {
+          void refresh();
+        }
+      };
+    } catch {
+      streamHealthy = false;
+    }
+
+    if (!streamSource) {
+      void refresh();
+    } else {
+      timeoutId = window.setTimeout(() => {
+        if (!cancelled && !streamHealthy) {
+          void refresh();
+        }
+      }, 1200);
+    }
 
     return () => {
       cancelled = true;
+      streamSource?.close();
       activeController?.abort();
       if (timeoutId !== null) {
         window.clearTimeout(timeoutId);

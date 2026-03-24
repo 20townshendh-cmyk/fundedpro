@@ -53,6 +53,7 @@ export function TradeLiveProvider({ accountId, symbol, initialState, children }:
   const [state, setState] = useState(initialState);
   const pollTimerRef = useRef<number | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
+  const fallbackTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     setState(initialState);
@@ -61,12 +62,19 @@ export function TradeLiveProvider({ accountId, symbol, initialState, children }:
   useEffect(() => {
     let cancelled = false;
     let inFlight = false;
-    let streamHealthy = false;
+    let receivedStreamMessage = false;
 
     const clearPoll = () => {
       if (pollTimerRef.current !== null) {
         window.clearInterval(pollTimerRef.current);
         pollTimerRef.current = null;
+      }
+    };
+
+    const clearFallback = () => {
+      if (fallbackTimerRef.current !== null) {
+        window.clearTimeout(fallbackTimerRef.current);
+        fallbackTimerRef.current = null;
       }
     };
 
@@ -124,7 +132,9 @@ export function TradeLiveProvider({ accountId, symbol, initialState, children }:
 
         try {
           const next = JSON.parse(event.data) as TradeLiveState;
-          streamHealthy = true;
+          receivedStreamMessage = true;
+          clearFallback();
+          clearPoll();
           setState(next);
         } catch {
           // fall back to polling below
@@ -132,7 +142,7 @@ export function TradeLiveProvider({ accountId, symbol, initialState, children }:
       };
 
       source.onerror = () => {
-        streamHealthy = false;
+        clearFallback();
         closeStream();
         if (!cancelled && pollTimerRef.current === null) {
           pollTimerRef.current = window.setInterval(() => {
@@ -141,7 +151,21 @@ export function TradeLiveProvider({ accountId, symbol, initialState, children }:
         }
       };
     } catch {
-      streamHealthy = false;
+      receivedStreamMessage = false;
+    }
+
+    if (eventSourceRef.current) {
+      fallbackTimerRef.current = window.setTimeout(() => {
+        if (!cancelled && !receivedStreamMessage && pollTimerRef.current === null) {
+          pollTimerRef.current = window.setInterval(() => {
+            void refresh();
+          }, 100);
+        }
+      }, 1200);
+    } else if (pollTimerRef.current === null) {
+      pollTimerRef.current = window.setInterval(() => {
+        void refresh();
+      }, 100);
     }
 
     const handleRefreshEvent = () => {
@@ -149,14 +173,10 @@ export function TradeLiveProvider({ accountId, symbol, initialState, children }:
     };
 
     window.addEventListener(TRADE_LIVE_REFRESH_EVENT, handleRefreshEvent);
-    if (!streamHealthy && pollTimerRef.current === null) {
-      pollTimerRef.current = window.setInterval(() => {
-        void refresh();
-      }, 100);
-    }
 
     return () => {
       cancelled = true;
+      clearFallback();
       closeStream();
       clearPoll();
       window.removeEventListener(TRADE_LIVE_REFRESH_EVENT, handleRefreshEvent);

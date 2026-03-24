@@ -1,10 +1,9 @@
-import { advanceDemoMarket } from "../../../../../lib/demo-trading/engine";
 import { getChartFeed } from "../../../../../lib/market-data";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const STREAM_INTERVAL_MS = 250;
+const STREAM_INTERVAL_MS = 150;
 const encoder = new TextEncoder();
 
 export async function GET(req: Request) {
@@ -22,7 +21,6 @@ export async function GET(req: Request) {
         }
 
         try {
-          await advanceDemoMarket();
           const data = await getChartFeed({ symbol, timeframe });
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
         } catch {
