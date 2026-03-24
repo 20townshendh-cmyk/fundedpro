@@ -139,7 +139,7 @@ export async function getDemoTradingLiveState(userId: string, search?: Pick<Term
 
   const activeAccount = activeAccountResult.rows[0] ?? null;
   const positionsResult = activeAccount
-    ? await db.query<{
+      ? await db.query<{
         instrumentId: string;
         symbol: string;
         side: string;
@@ -147,9 +147,12 @@ export async function getDemoTradingLiveState(userId: string, search?: Pick<Term
         averageEntryPrice: string;
         lastPrice: string;
         unrealizedPnl: string;
+        takeProfitPrice: string | null;
+        stopLossPrice: string | null;
       }>(
         `
           SELECT i."id" AS "instrumentId", i."symbol", p."side", p."quantity", p."averageEntryPrice"::text, p."lastPrice"::text, p."unrealizedPnl"::text
+          , p."takeProfitPrice"::text, p."stopLossPrice"::text
           FROM "DemoPosition" p
           JOIN "Instrument" i ON i."id" = p."instrumentId"
           WHERE p."demoAccountId" = $1
@@ -371,9 +374,11 @@ export async function getDemoTradingTerminal(userId: string, search?: TerminalSe
           lastPrice: string;
           realizedPnl: string;
           unrealizedPnl: string;
+          takeProfitPrice: string | null;
+          stopLossPrice: string | null;
         }>(
           `
-            SELECT i."id" AS "instrumentId", i."symbol", p."side", p."quantity", p."averageEntryPrice"::text, p."lastPrice"::text, p."realizedPnl"::text, p."unrealizedPnl"::text
+            SELECT i."id" AS "instrumentId", i."symbol", p."side", p."quantity", p."averageEntryPrice"::text, p."lastPrice"::text, p."realizedPnl"::text, p."unrealizedPnl"::text, p."takeProfitPrice"::text, p."stopLossPrice"::text
             FROM "DemoPosition" p
             JOIN "Instrument" i ON i."id" = p."instrumentId"
             WHERE p."demoAccountId" = $1

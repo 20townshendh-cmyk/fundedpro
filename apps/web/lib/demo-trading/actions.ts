@@ -48,6 +48,13 @@ const cancelOrderSchema = z.object({
   layout: z.string().optional()
 });
 
+const protectionSchema = z.object({
+  demoAccountId: z.string().min(1),
+  instrumentId: z.string().min(1),
+  takeProfitPrice: z.preprocess((value) => (value === "" || value == null ? undefined : value), z.coerce.number().positive().optional()),
+  stopLossPrice: z.preprocess((value) => (value === "" || value == null ? undefined : value), z.coerce.number().positive().optional())
+});
+
 const terminalLoginSchema = z.object({
   username: z.string().trim().min(1).max(120),
   password: z.string().min(1).max(200),
@@ -411,6 +418,73 @@ export async function cancelDemoOrderAction(formData: FormData) {
   await recalculateDemoAccountState(order.demoAccountId);
 
   buildRedirect({ success: "order-canceled", symbol: data.symbol, tab: data.tab ?? "orders", accountId: data.accountId, timeframe: data.timeframe, layout: data.layout });
+}
+
+export async function updateDemoPositionProtectionAction(formData: FormData) {
+  const session = await requireTrader();
+  const parsed = protectionSchema.safeParse({
+    demoAccountId: formData.get("demoAccountId"),
+    instrumentId: formData.get("instrumentId"),
+    takeProfitPrice: formData.get("takeProfitPrice"),
+    stopLossPrice: formData.get("stopLossPrice")
+  });
+
+  if (!parsed.success) {
+    return { ok: false as const, error: "invalid-protection" as const };
+  }
+
+  const data = parsed.data;
+  const db = getDb();
+  const positionResult = await db.query<{ id: string }>(
+    `
+      SELECT p."id"
+      FROM "DemoPosition" p
+      JOIN "DemoAccount" da ON da."id" = p."demoAccountId"
+      WHERE p."demoAccountId" = $1 AND p."instrumentId" = $2 AND da."userId" = $3
+      LIMIT 1
+    `,
+    [data.demoAccountId, data.instrumentId, session.userId]
+  );
+
+  const position = positionResult.rows[0];
+
+  if (!position) {
+    return { ok: false as const, error: "invalid-protection" as const };
+  }
+
+  await db.query(
+    `
+      UPDATE "DemoPosition"
+      SET
+        "takeProfitPrice" = $1,
+        "stopLossPrice" = $2,
+        "updatedAt" = NOW()
+      WHERE "id" = $3
+    `,
+    [data.takeProfitPrice ?? null, data.stopLossPrice ?? null, position.id]
+  );
+
+  await db.query(
+    `
+      INSERT INTO "AccountActivityLog" ("id", "userId", "demoAccountId", "type", "summary", "metadata", "createdAt")
+      VALUES ($1, $2, $3, 'POSITION_PROTECTION_UPDATED', $4, $5::jsonb, NOW())
+    `,
+    [
+      randomUUID(),
+      session.userId,
+      data.demoAccountId,
+      "Position protection updated.",
+      JSON.stringify({
+        instrumentId: data.instrumentId,
+        takeProfitPrice: data.takeProfitPrice ?? null,
+        stopLossPrice: data.stopLossPrice ?? null
+      })
+    ]
+  );
+
+  await recalculateDemoAccountState(data.demoAccountId);
+
+  return { ok: true as const };
 }
 
 export async function unlockDemoTerminalAction(formData: FormData) {

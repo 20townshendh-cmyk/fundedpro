@@ -21,6 +21,8 @@ type PositionRow = {
   averageEntryPrice: string;
   lastPrice: string;
   unrealizedPnl: string;
+  takeProfitPrice: string | null;
+  stopLossPrice: string | null;
 };
 
 type LiveInstrument = {

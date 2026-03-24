@@ -13,7 +13,7 @@ import {
   type ISeriesApi,
   type IPriceLine
 } from "lightweight-charts";
-import { submitDemoOrderAction } from "../../../lib/demo-trading/actions";
+import { updateDemoPositionProtectionAction } from "../../../lib/demo-trading/actions";
 import type { DemoCandle } from "../../../lib/demo-trading/chart";
 import type { ChartTimeframe } from "../../../lib/demo-trading/delayed-feed";
 import { useTradeLiveContext } from "./trade-live-context";
@@ -60,13 +60,16 @@ export function LiveChart({
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const priceLineRef = useRef<IPriceLine | null>(null);
+  const entryPriceLineRef = useRef<IPriceLine | null>(null);
+  const takeProfitLineRef = useRef<IPriceLine | null>(null);
+  const stopLossLineRef = useRef<IPriceLine | null>(null);
   const visibleRangeRef = useRef<LogicalRange | null>(null);
   const candleCacheRef = useRef<CandlestickData[]>(toCandleData(initialCandles));
   const currentPriceRef = useRef(lastPrice);
+  const takeProfitDraftRef = useRef<number | null>(null);
+  const stopLossDraftRef = useRef<number | null>(null);
   const requestIdRef = useRef(0);
-  const activePositionKeyRef = useRef<string | null>(null);
   const viewportKeyRef = useRef(`${symbol}:${initialTimeframe}`);
-  const triggerLockRef = useRef<"tp" | "sl" | null>(null);
   const [activeSymbol, setActiveSymbol] = useState(symbol);
   const [timeframe, setTimeframe] = useState<Timeframe>(initialTimeframe);
   const [currentPrice, setCurrentPrice] = useState(lastPrice);
@@ -75,8 +78,8 @@ export function LiveChart({
   const [feedBadge, setFeedBadge] = useState<"live" | "simulated" | "delayed" | "loading">("loading");
   const [lastTickAt, setLastTickAt] = useState<string | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
-  const [takeProfitPrice, setTakeProfitPrice] = useState<number | null>(null);
-  const [stopLossPrice, setStopLossPrice] = useState<number | null>(null);
+  const [takeProfitDraft, setTakeProfitDraft] = useState<number | null>(null);
+  const [stopLossDraft, setStopLossDraft] = useState<number | null>(null);
   const [draggingLine, setDraggingLine] = useState<"tp" | "sl" | null>(null);
   const [placingProtection, setPlacingProtection] = useState<"tp" | "sl" | null>(null);
   const [entryMenuOpen, setEntryMenuOpen] = useState(false);
@@ -86,8 +89,11 @@ export function LiveChart({
   const activeInstrument = instruments.find((instrument) => instrument.symbol === activeSymbol) ?? null;
   const hasActivePosition = Boolean(activePosition && activeInstrument && demoAccountId);
   const entryPrice = activePosition ? Number(activePosition.averageEntryPrice) : null;
+  const persistedTakeProfitPrice = activePosition?.takeProfitPrice ? Number(activePosition.takeProfitPrice) : null;
+  const persistedStopLossPrice = activePosition?.stopLossPrice ? Number(activePosition.stopLossPrice) : null;
+  const takeProfitPrice = takeProfitDraft ?? persistedTakeProfitPrice;
+  const stopLossPrice = stopLossDraft ?? persistedStopLossPrice;
   const positionSide = activePosition?.side === "LONG" ? "LONG" : activePosition?.side === "SHORT" ? "SHORT" : null;
-  const exitSide = positionSide === "LONG" ? "SELL" : positionSide === "SHORT" ? "BUY" : null;
   const tickSize = activeSymbol === "NQ" || activeSymbol === "ES" ? 0.25 : 0.01;
 
   function formatLinePrice(value: number | null) {
@@ -122,13 +128,31 @@ export function LiveChart({
       : Math.max(snapped, snapPrice(entryPrice + offset));
   }
 
-  function lineTop(price: number | null) {
-    if (price == null || !seriesRef.current) {
-      return null;
+  async function persistProtectionLevels(nextTakeProfitPrice: number | null, nextStopLossPrice: number | null) {
+    if (!activeInstrument || !demoAccountId) {
+      return;
     }
 
-    const coordinate = seriesRef.current.priceToCoordinate(price);
-    return typeof coordinate === "number" && Number.isFinite(coordinate) ? coordinate : null;
+    const formData = new FormData();
+    formData.set("demoAccountId", demoAccountId);
+    formData.set("instrumentId", activeInstrument.instrumentId);
+
+    if (nextTakeProfitPrice != null) {
+      formData.set("takeProfitPrice", String(nextTakeProfitPrice));
+    }
+
+    if (nextStopLossPrice != null) {
+      formData.set("stopLossPrice", String(nextStopLossPrice));
+    }
+
+    const result = await updateDemoPositionProtectionAction(formData);
+
+    if (!result.ok) {
+      setOrderMessage("Protection update was rejected.");
+      return;
+    }
+
+    emitTradeLiveRefresh();
   }
 
   function getCandleDurationMs(selectedTimeframe: Timeframe) {
@@ -436,12 +460,81 @@ export function LiveChart({
     seriesRef.current = series;
 
     return () => {
+      if (entryPriceLineRef.current) {
+        series.removePriceLine(entryPriceLineRef.current);
+      }
+      if (takeProfitLineRef.current) {
+        series.removePriceLine(takeProfitLineRef.current);
+      }
+      if (stopLossLineRef.current) {
+        series.removePriceLine(stopLossLineRef.current);
+      }
+      if (priceLineRef.current) {
+        series.removePriceLine(priceLineRef.current);
+      }
       chart.remove();
       chartRef.current = null;
       seriesRef.current = null;
       priceLineRef.current = null;
+      entryPriceLineRef.current = null;
+      takeProfitLineRef.current = null;
+      stopLossLineRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    const series = seriesRef.current;
+
+    if (!series) {
+      return;
+    }
+
+    if (entryPriceLineRef.current) {
+      series.removePriceLine(entryPriceLineRef.current);
+      entryPriceLineRef.current = null;
+    }
+    if (takeProfitLineRef.current) {
+      series.removePriceLine(takeProfitLineRef.current);
+      takeProfitLineRef.current = null;
+    }
+    if (stopLossLineRef.current) {
+      series.removePriceLine(stopLossLineRef.current);
+      stopLossLineRef.current = null;
+    }
+
+    if (entryPrice != null) {
+      entryPriceLineRef.current = series.createPriceLine({
+        price: entryPrice,
+        color: "#f97316",
+        lineStyle: LineStyle.Dashed,
+        lineWidth: 2,
+        axisLabelVisible: true,
+        title: "ENTRY"
+      });
+    }
+
+    if (takeProfitPrice != null) {
+      takeProfitLineRef.current = series.createPriceLine({
+        price: takeProfitPrice,
+        color: "#22c55e",
+        lineStyle: LineStyle.Dashed,
+        lineWidth: 2,
+        axisLabelVisible: true,
+        title: "TP"
+      });
+    }
+
+    if (stopLossPrice != null) {
+      stopLossLineRef.current = series.createPriceLine({
+        price: stopLossPrice,
+        color: "#f43f5e",
+        lineStyle: LineStyle.Dashed,
+        lineWidth: 2,
+        axisLabelVisible: true,
+        title: "SL"
+      });
+    }
+  }, [entryPrice, stopLossPrice, takeProfitPrice]);
 
   useEffect(() => {
     chartRef.current?.applyOptions({
@@ -453,34 +546,14 @@ export function LiveChart({
   }, [compact, timeframe]);
 
   useEffect(() => {
-    if (!activePosition) {
-      activePositionKeyRef.current = null;
-      setTakeProfitPrice(null);
-      setStopLossPrice(null);
-      setPlacingProtection(null);
-      setEntryMenuOpen(false);
-      triggerLockRef.current = null;
-      return;
-    }
-
-    const nextPositionKey = [
-      activePosition.symbol,
-      activePosition.side,
-      activePosition.quantity,
-      activePosition.averageEntryPrice
-    ].join(":");
-
-    if (activePositionKeyRef.current !== nextPositionKey) {
-      activePositionKeyRef.current = nextPositionKey;
-      setTakeProfitPrice(null);
-      setStopLossPrice(null);
+    if (!hasActivePosition) {
+      setTakeProfitDraft(null);
+      setStopLossDraft(null);
       setPlacingProtection(null);
       setEntryMenuOpen(false);
       setOrderMessage(null);
     }
-
-    triggerLockRef.current = null;
-  }, [activePosition?.symbol, activePosition?.side, activePosition?.quantity, activePosition?.averageEntryPrice]);
+  }, [hasActivePosition]);
 
   useEffect(() => {
     const series = seriesRef.current;
@@ -569,6 +642,26 @@ export function LiveChart({
   }, []);
 
   useEffect(() => {
+    takeProfitDraftRef.current = takeProfitDraft;
+  }, [takeProfitDraft]);
+
+  useEffect(() => {
+    stopLossDraftRef.current = stopLossDraft;
+  }, [stopLossDraft]);
+
+  useEffect(() => {
+    if (draggingLine !== "tp") {
+      setTakeProfitDraft(persistedTakeProfitPrice);
+    }
+  }, [draggingLine, persistedTakeProfitPrice]);
+
+  useEffect(() => {
+    if (draggingLine !== "sl") {
+      setStopLossDraft(persistedStopLossPrice);
+    }
+  }, [draggingLine, persistedStopLossPrice]);
+
+  useEffect(() => {
     if (!live?.selectedInstrument || live.selectedInstrument.symbol !== activeSymbol) {
       return;
     }
@@ -612,15 +705,20 @@ export function LiveChart({
 
       const normalizedPrice = normalizeProtectionPrice(draggingLine, nextPrice);
       if (draggingLine === "tp") {
-        setTakeProfitPrice(normalizedPrice);
+        setTakeProfitDraft(normalizedPrice);
       } else {
-        setStopLossPrice(normalizedPrice);
+        setStopLossDraft(normalizedPrice);
       }
       setOrderMessage(null);
     };
 
     const handleUp = () => {
+      const nextTakeProfitPrice = draggingLine === "tp" ? takeProfitDraftRef.current : takeProfitPrice;
+      const nextStopLossPrice = draggingLine === "sl" ? stopLossDraftRef.current : stopLossPrice;
       setDraggingLine(null);
+      startTransition(async () => {
+        await persistProtectionLevels(nextTakeProfitPrice ?? null, nextStopLossPrice ?? null);
+      });
     };
 
     window.addEventListener("mousemove", handleMove);
@@ -630,7 +728,7 @@ export function LiveChart({
       window.removeEventListener("mousemove", handleMove);
       window.removeEventListener("mouseup", handleUp);
     };
-  }, [draggingLine]);
+  }, [draggingLine, stopLossPrice, takeProfitPrice]);
 
   useEffect(() => {
     if (!placingProtection || !seriesRef.current || !containerRef.current) {
@@ -650,13 +748,18 @@ export function LiveChart({
 
       const normalizedPrice = normalizeProtectionPrice(placingProtection, nextPrice);
       if (placingProtection === "tp") {
-        setTakeProfitPrice(normalizedPrice);
+        setTakeProfitDraft(normalizedPrice);
       } else {
-        setStopLossPrice(normalizedPrice);
+        setStopLossDraft(normalizedPrice);
       }
+      const nextTakeProfitPrice = placingProtection === "tp" ? normalizedPrice : takeProfitPrice;
+      const nextStopLossPrice = placingProtection === "sl" ? normalizedPrice : stopLossPrice;
       setPlacingProtection(null);
       setEntryMenuOpen(false);
       setOrderMessage(null);
+      startTransition(async () => {
+        await persistProtectionLevels(nextTakeProfitPrice ?? null, nextStopLossPrice ?? null);
+      });
     };
 
     window.addEventListener("click", handleClick);
@@ -664,76 +767,7 @@ export function LiveChart({
     return () => {
       window.removeEventListener("click", handleClick);
     };
-  }, [placingProtection]);
-
-  useEffect(() => {
-    if (!activePosition || !exitSide || !demoAccountId || triggerLockRef.current || !takeProfitPrice || !stopLossPrice) {
-      return;
-    }
-
-    const positionLast = Number(activePosition.lastPrice || currentPrice);
-    const tpTriggered =
-      activePosition.side === "LONG"
-        ? positionLast >= takeProfitPrice
-        : positionLast <= takeProfitPrice;
-    const slTriggered =
-      activePosition.side === "LONG"
-        ? positionLast <= stopLossPrice
-        : positionLast >= stopLossPrice;
-
-    if (!tpTriggered && !slTriggered) {
-      return;
-    }
-
-    const triggerKind: "tp" | "sl" = tpTriggered ? "tp" : "sl";
-    triggerLockRef.current = triggerKind;
-    setOrderMessage(triggerKind === "tp" ? "Take profit triggered." : "Stop loss triggered.");
-
-    const formData = new FormData();
-    formData.set("demoAccountId", demoAccountId);
-    formData.set("instrumentId", activeInstrument?.instrumentId ?? activePosition.instrumentId);
-    formData.set("symbol", activeSymbol);
-    formData.set("side", exitSide);
-    formData.set("tab", "positions");
-    formData.set("accountId", accountId ?? "");
-    formData.set("type", "MARKET");
-    formData.set("quantity", String(activePosition.quantity));
-    formData.set("timeframe", timeframe);
-    formData.set("layout", layout);
-
-    startTransition(async () => {
-      const result = await submitDemoOrderAction(formData);
-      if (!result.ok) {
-        setOrderMessage(
-          result.error === "market-closed"
-            ? "Market is closed for this instrument right now."
-            : result.error === "price-stale"
-              ? "Execution price is stale. Wait for a fresh tick before sending a market order."
-              : "Protective exit was rejected."
-        );
-        triggerLockRef.current = null;
-        return;
-      }
-
-      setTakeProfitPrice(null);
-      setStopLossPrice(null);
-      setEntryMenuOpen(false);
-      setPlacingProtection(null);
-      emitTradeLiveRefresh();
-    });
-  }, [
-    activeInstrument?.instrumentId,
-    activePosition,
-    accountId,
-    activeSymbol,
-    currentPrice,
-    demoAccountId,
-    exitSide,
-    layout,
-    stopLossPrice,
-    takeProfitPrice,
-    timeframe
-  ]);
+  }, [placingProtection, stopLossPrice, takeProfitPrice]);
 
   useEffect(() => {
     let cancelled = false;
@@ -981,9 +1015,11 @@ export function LiveChart({
                 type="button"
                 className="trade-chip"
                 onClick={() => {
-                  setTakeProfitPrice(null);
+                  setTakeProfitDraft(null);
                   setPlacingProtection(null);
-                  triggerLockRef.current = null;
+                  startTransition(async () => {
+                    await persistProtectionLevels(null, stopLossPrice);
+                  });
                 }}
               >
                 Clear TP
@@ -994,9 +1030,11 @@ export function LiveChart({
                 type="button"
                 className="trade-chip"
                 onClick={() => {
-                  setStopLossPrice(null);
+                  setStopLossDraft(null);
                   setPlacingProtection(null);
-                  triggerLockRef.current = null;
+                  startTransition(async () => {
+                    await persistProtectionLevels(takeProfitPrice, null);
+                  });
                 }}
               >
                 Clear SL
@@ -1006,82 +1044,7 @@ export function LiveChart({
         </div>
       ) : null}
       {orderMessage ? <div className="trade-chart-order-message">{orderMessage}</div> : null}
-      <div ref={containerRef} className="trade-chart-canvas">
-        {hasActivePosition && entryPrice != null && lineTop(entryPrice) != null ? (
-          <>
-            <div
-              className={`trade-chart-line-handle entry-line${entryMenuOpen ? " active" : ""}`}
-              style={{ top: `${lineTop(entryPrice)}px` }}
-            >
-              <button
-                type="button"
-                className={`trade-chart-line-pill entry${entryMenuOpen ? " active" : ""}`}
-                onClick={() => {
-                  setEntryMenuOpen((value) => !value);
-                  setPlacingProtection(null);
-                }}
-              >
-                <strong>{`Entry ${formatLinePrice(entryPrice)}`}</strong>
-              </button>
-            </div>
-            {entryMenuOpen ? (
-              <div
-                className="trade-chart-line-actions"
-                style={{ top: `${lineTop(entryPrice)}px` }}
-              >
-                <button
-                  type="button"
-                  className={`trade-chart-line-action${placingProtection === "tp" ? " active" : ""}`}
-                  onClick={() => {
-                    setPlacingProtection("tp");
-                    setOrderMessage("Click on the chart to place take profit.");
-                  }}
-                >
-                  Set TP
-                </button>
-                <button
-                  type="button"
-                  className={`trade-chart-line-action${placingProtection === "sl" ? " active" : ""}`}
-                  onClick={() => {
-                    setPlacingProtection("sl");
-                    setOrderMessage("Click on the chart to place stop loss.");
-                  }}
-                >
-                  Set SL
-                </button>
-              </div>
-            ) : null}
-          </>
-        ) : null}
-        {hasActivePosition && takeProfitPrice != null && lineTop(takeProfitPrice) != null ? (
-          <div
-            className="trade-chart-line-handle take-profit"
-            style={{ top: `${lineTop(takeProfitPrice)}px` }}
-          >
-            <button
-              type="button"
-              className="trade-chart-line-pill"
-              onMouseDown={() => setDraggingLine("tp")}
-            >
-              <strong>TP {formatLinePrice(takeProfitPrice)}</strong>
-            </button>
-          </div>
-        ) : null}
-        {hasActivePosition && stopLossPrice != null && lineTop(stopLossPrice) != null ? (
-          <div
-            className="trade-chart-line-handle stop-loss"
-            style={{ top: `${lineTop(stopLossPrice)}px` }}
-          >
-            <button
-              type="button"
-              className="trade-chart-line-pill"
-              onMouseDown={() => setDraggingLine("sl")}
-            >
-              <strong>SL {formatLinePrice(stopLossPrice)}</strong>
-            </button>
-          </div>
-        ) : null}
-      </div>
+      <div ref={containerRef} className="trade-chart-canvas" />
     </div>
   );
 }

@@ -36,6 +36,18 @@ type OrderRow = {
   averageFillPrice?: string | null;
 };
 
+type PositionProtectionRow = {
+  id: string;
+  userId: string;
+  demoAccountId: string;
+  instrumentId: string;
+  symbol: string;
+  side: "LONG" | "SHORT";
+  quantity: number;
+  takeProfitPrice: string | null;
+  stopLossPrice: string | null;
+};
+
 type InstrumentMeta = {
   instrumentId: string;
   symbol: string;
@@ -382,9 +394,11 @@ async function applyFill(
     side: "LONG" | "SHORT";
     quantity: number;
     averageEntryPrice: string;
+    takeProfitPrice: string | null;
+    stopLossPrice: string | null;
   }>(
     `
-      SELECT "id", "side", "quantity", "averageEntryPrice"::text
+      SELECT "id", "side", "quantity", "averageEntryPrice"::text, "takeProfitPrice"::text, "stopLossPrice"::text
       FROM "DemoPosition"
       WHERE "demoAccountId" = $1 AND "instrumentId" = $2
       LIMIT 1
@@ -404,9 +418,9 @@ async function applyFill(
     await client.query(
       `
         INSERT INTO "DemoPosition" (
-          "id", "userId", "demoAccountId", "instrumentId", "side", "quantity", "averageEntryPrice", "lastPrice", "realizedPnl", "unrealizedPnl", "openedAt", "createdAt", "updatedAt"
+          "id", "userId", "demoAccountId", "instrumentId", "side", "quantity", "averageEntryPrice", "lastPrice", "takeProfitPrice", "stopLossPrice", "realizedPnl", "unrealizedPnl", "openedAt", "createdAt", "updatedAt"
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $7, 0, 0, NOW(), NOW(), NOW())
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $7, NULL, NULL, 0, 0, NOW(), NOW(), NOW())
       `,
       [
         randomUUID(),
@@ -462,7 +476,7 @@ async function applyFill(
       await client.query(
         `
           UPDATE "DemoPosition"
-          SET "side" = $1, "quantity" = $2, "averageEntryPrice" = $3, "lastPrice" = $3, "updatedAt" = NOW()
+          SET "side" = $1, "quantity" = $2, "averageEntryPrice" = $3, "lastPrice" = $3, "takeProfitPrice" = NULL, "stopLossPrice" = NULL, "updatedAt" = NOW()
           WHERE "id" = $4
         `,
         [orderSide, leftoverOrderQuantity, input.fillPrice, existingPosition.id]
@@ -529,6 +543,80 @@ async function applyFill(
   });
 
   await recalcDemoAccount(client, input.order.demoAccountId);
+}
+
+async function triggerProtectionExit(
+  client: PoolClient,
+  input: {
+    position: PositionProtectionRow;
+    instrument: InstrumentMeta;
+    triggerKind: "tp" | "sl";
+    marketPrice: number;
+  }
+) {
+  const orderId = randomUUID();
+  const exitSide: "BUY" | "SELL" = input.position.side === "LONG" ? "SELL" : "BUY";
+  const fillPrice = getMarketExecutionPrice({
+    symbol: input.instrument.symbol,
+    side: exitSide,
+    lastPrice: input.marketPrice,
+    tickSize: Number(input.instrument.tickSize),
+    quantity: input.position.quantity,
+    latestSource: input.instrument.latestSource
+  });
+
+  await client.query(
+    `
+      INSERT INTO "DemoOrder" (
+        "id", "userId", "demoAccountId", "instrumentId", "side", "type", "status", "quantity", "submittedPrice", "filledQuantity", "remainingQuantity", "submittedAt", "createdAt", "updatedAt"
+      )
+      VALUES ($1, $2, $3, $4, $5, 'MARKET', 'WORKING', $6, $7, 0, $6, NOW(), NOW(), NOW())
+    `,
+    [
+      orderId,
+      input.position.userId,
+      input.position.demoAccountId,
+      input.position.instrumentId,
+      exitSide,
+      input.position.quantity,
+      fillPrice
+    ]
+  );
+
+  await logActivity(client, {
+    userId: input.position.userId,
+    demoAccountId: input.position.demoAccountId,
+    type: input.triggerKind === "tp" ? "TAKE_PROFIT_TRIGGERED" : "STOP_LOSS_TRIGGERED",
+    summary: `${input.triggerKind === "tp" ? "Take profit" : "Stop loss"} triggered for ${input.position.symbol} at ${fillPrice.toFixed(2)}.`,
+    metadata: {
+      instrumentId: input.position.instrumentId,
+      symbol: input.position.symbol,
+      quantity: input.position.quantity,
+      triggerKind: input.triggerKind,
+      fillPrice
+    },
+    orderId
+  });
+
+  await applyFill(client, {
+    order: {
+      id: orderId,
+      userId: input.position.userId,
+      demoAccountId: input.position.demoAccountId,
+      instrumentId: input.position.instrumentId,
+      side: exitSide,
+      type: "MARKET",
+      status: "WORKING",
+      quantity: input.position.quantity,
+      filledQuantity: 0,
+      remainingQuantity: input.position.quantity,
+      limitPrice: null,
+      averageFillPrice: null
+    },
+    instrument: input.instrument,
+    fillPrice,
+    fillQuantity: input.position.quantity
+  });
 }
 
 async function getLatestInstrumentMap(client: PoolClient) {
@@ -647,6 +735,25 @@ export async function advanceDemoMarket() {
 
     const instrumentMap = await getLatestInstrumentMap(client);
 
+    const protectedPositionsResult = await client.query<PositionProtectionRow>(
+      `
+        SELECT
+          p."id",
+          p."userId",
+          p."demoAccountId",
+          p."instrumentId",
+          i."symbol",
+          p."side",
+          p."quantity",
+          p."takeProfitPrice"::text,
+          p."stopLossPrice"::text
+        FROM "DemoPosition" p
+        JOIN "Instrument" i ON i."id" = p."instrumentId"
+        WHERE p."takeProfitPrice" IS NOT NULL OR p."stopLossPrice" IS NOT NULL
+        ORDER BY p."updatedAt" ASC
+      `
+    );
+
     for (const order of workingOrdersResult.rows) {
       const instrument = instrumentMap.get(order.instrumentId);
 
@@ -672,6 +779,42 @@ export async function advanceDemoMarket() {
         });
         touchedDemoAccountIds.add(order.demoAccountId);
       }
+    }
+
+    for (const position of protectedPositionsResult.rows) {
+      const instrument = instrumentMap.get(position.instrumentId);
+
+      if (!instrument) {
+        continue;
+      }
+
+      const marketPrice = nextPrices.get(position.instrumentId) ?? Number(instrument.latestPrice);
+      const takeProfitPrice = position.takeProfitPrice != null ? Number(position.takeProfitPrice) : null;
+      const stopLossPrice = position.stopLossPrice != null ? Number(position.stopLossPrice) : null;
+      const tpTriggered =
+        takeProfitPrice == null
+          ? false
+          : position.side === "LONG"
+            ? marketPrice >= takeProfitPrice
+            : marketPrice <= takeProfitPrice;
+      const slTriggered =
+        stopLossPrice == null
+          ? false
+          : position.side === "LONG"
+            ? marketPrice <= stopLossPrice
+            : marketPrice >= stopLossPrice;
+
+      if (!tpTriggered && !slTriggered) {
+        continue;
+      }
+
+      await triggerProtectionExit(client, {
+        position,
+        instrument,
+        triggerKind: tpTriggered ? "tp" : "sl",
+        marketPrice
+      });
+      touchedDemoAccountIds.add(position.demoAccountId);
     }
 
     const accountIdsResult = await client.query<{ demoAccountId: string }>(
