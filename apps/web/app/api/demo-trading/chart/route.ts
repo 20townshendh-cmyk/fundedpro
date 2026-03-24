@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { advanceDemoMarket } from "../../../../lib/demo-trading/engine";
 import { getChartFeed } from "../../../../lib/market-data";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +10,6 @@ export async function GET(req: Request) {
   const timeframe = searchParams.get("timeframe") || "5m";
 
   try {
-    await advanceDemoMarket();
     const data = await getChartFeed({ symbol, timeframe });
     return NextResponse.json(data, {
       headers: {

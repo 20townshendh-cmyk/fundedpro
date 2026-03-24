@@ -38,7 +38,7 @@ type LiveChartProps = {
 type Timeframe = ChartTimeframe;
 
 const timeframeOptions: Timeframe[] = ["1m", "5m", "15m", "1h", "1d", "1w"];
-const CHART_REFRESH_MS = 600;
+const CHART_REFRESH_MS = 1200;
 
 export function LiveChart({
   symbol,

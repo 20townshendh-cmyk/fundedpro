@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { TRADE_LIVE_REFRESH_EVENT } from "./trade-live-events";
 
 type ActiveAccount = {
@@ -51,6 +51,8 @@ type TradeLiveProviderProps = {
 
 export function TradeLiveProvider({ accountId, symbol, initialState, children }: TradeLiveProviderProps) {
   const [state, setState] = useState(initialState);
+  const pollTimerRef = useRef<number | null>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
     setState(initialState);
@@ -59,6 +61,21 @@ export function TradeLiveProvider({ accountId, symbol, initialState, children }:
   useEffect(() => {
     let cancelled = false;
     let inFlight = false;
+    let streamHealthy = false;
+
+    const clearPoll = () => {
+      if (pollTimerRef.current !== null) {
+        window.clearInterval(pollTimerRef.current);
+        pollTimerRef.current = null;
+      }
+    };
+
+    const closeStream = () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+    };
 
     const refresh = async () => {
       if (cancelled || inFlight) {
@@ -90,20 +107,59 @@ export function TradeLiveProvider({ accountId, symbol, initialState, children }:
 
     void refresh();
 
+    const requestQuery = new URLSearchParams();
+    if (accountId) {
+      requestQuery.set("accountId", accountId);
+    }
+    requestQuery.set("symbol", symbol);
+
+    try {
+      const source = new EventSource(`/api/demo-trading/live-state/stream?${requestQuery.toString()}`);
+      eventSourceRef.current = source;
+
+      source.onmessage = (event) => {
+        if (cancelled) {
+          return;
+        }
+
+        try {
+          const next = JSON.parse(event.data) as TradeLiveState;
+          streamHealthy = true;
+          setState(next);
+        } catch {
+          // fall back to polling below
+        }
+      };
+
+      source.onerror = () => {
+        streamHealthy = false;
+        closeStream();
+        if (!cancelled && pollTimerRef.current === null) {
+          pollTimerRef.current = window.setInterval(() => {
+            void refresh();
+          }, 100);
+        }
+      };
+    } catch {
+      streamHealthy = false;
+    }
+
     const handleRefreshEvent = () => {
       void refresh();
     };
 
     window.addEventListener(TRADE_LIVE_REFRESH_EVENT, handleRefreshEvent);
-
-    const interval = window.setInterval(() => {
-      void refresh();
-    }, 100);
+    if (!streamHealthy && pollTimerRef.current === null) {
+      pollTimerRef.current = window.setInterval(() => {
+        void refresh();
+      }, 100);
+    }
 
     return () => {
       cancelled = true;
+      closeStream();
+      clearPoll();
       window.removeEventListener(TRADE_LIVE_REFRESH_EVENT, handleRefreshEvent);
-      window.clearInterval(interval);
     };
   }, [accountId, symbol]);
 

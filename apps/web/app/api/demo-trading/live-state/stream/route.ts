@@ -19,6 +19,7 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const accountId = searchParams.get("accountId") ?? undefined;
+  const symbol = searchParams.get("symbol") ?? undefined;
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -30,7 +31,15 @@ export async function GET(request: Request) {
         }
 
         try {
-          const liveState = await getDemoTradingLiveState(session.userId, accountId ? { accountId } : undefined);
+          const liveState = await getDemoTradingLiveState(
+            session.userId,
+            accountId || symbol
+              ? {
+                  ...(accountId ? { accountId } : {}),
+                  ...(symbol ? { symbol } : {})
+                }
+              : undefined
+          );
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(liveState)}\n\n`));
         } catch {
           controller.enqueue(encoder.encode(`event: error\ndata: ${JSON.stringify({ error: "stream-failed" })}\n\n`));
