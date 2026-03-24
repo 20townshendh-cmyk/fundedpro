@@ -6,6 +6,7 @@ import { getDb } from "@fundedpro/db";
 import { syncTradingAccountFromDemoAccount } from "../internal-trading-sync";
 import { getMaxContractsForBalance } from "./contracts";
 import { assertDemoInstrumentMarketOpen } from "./market-hours";
+import { demoPositionProtectionColumnsAvailable } from "./protection-columns";
 
 const MARGIN_RATE = 0.1;
 const LIVE_INGEST_FRESHNESS_MS = 3_000;
@@ -389,6 +390,7 @@ async function applyFill(
     fillQuantity?: number;
   }
 ) {
+  const hasProtectionColumns = await demoPositionProtectionColumnsAvailable();
   const positionResult = await client.query<{
     id: string;
     side: "LONG" | "SHORT";
@@ -398,7 +400,9 @@ async function applyFill(
     stopLossPrice: string | null;
   }>(
     `
-      SELECT "id", "side", "quantity", "averageEntryPrice"::text, "takeProfitPrice"::text, "stopLossPrice"::text
+      SELECT "id", "side", "quantity", "averageEntryPrice"::text,
+        ${hasProtectionColumns ? '"takeProfitPrice"::text' : "NULL::text"} AS "takeProfitPrice",
+        ${hasProtectionColumns ? '"stopLossPrice"::text' : "NULL::text"} AS "stopLossPrice"
       FROM "DemoPosition"
       WHERE "demoAccountId" = $1 AND "instrumentId" = $2
       LIMIT 1
@@ -663,6 +667,7 @@ export async function advanceDemoMarket() {
 
   try {
     await client.query("BEGIN");
+    const hasProtectionColumns = await demoPositionProtectionColumnsAvailable();
 
     const instrumentsResult = await client.query<LatestInstrumentRow>(
       `
@@ -735,24 +740,26 @@ export async function advanceDemoMarket() {
 
     const instrumentMap = await getLatestInstrumentMap(client);
 
-    const protectedPositionsResult = await client.query<PositionProtectionRow>(
-      `
-        SELECT
-          p."id",
-          p."userId",
-          p."demoAccountId",
-          p."instrumentId",
-          i."symbol",
-          p."side",
-          p."quantity",
-          p."takeProfitPrice"::text,
-          p."stopLossPrice"::text
-        FROM "DemoPosition" p
-        JOIN "Instrument" i ON i."id" = p."instrumentId"
-        WHERE p."takeProfitPrice" IS NOT NULL OR p."stopLossPrice" IS NOT NULL
-        ORDER BY p."updatedAt" ASC
-      `
-    );
+    const protectedPositionsResult = hasProtectionColumns
+      ? await client.query<PositionProtectionRow>(
+          `
+            SELECT
+              p."id",
+              p."userId",
+              p."demoAccountId",
+              p."instrumentId",
+              i."symbol",
+              p."side",
+              p."quantity",
+              p."takeProfitPrice"::text,
+              p."stopLossPrice"::text
+            FROM "DemoPosition" p
+            JOIN "Instrument" i ON i."id" = p."instrumentId"
+            WHERE p."takeProfitPrice" IS NOT NULL OR p."stopLossPrice" IS NOT NULL
+            ORDER BY p."updatedAt" ASC
+          `
+        )
+      : { rows: [] };
 
     for (const order of workingOrdersResult.rows) {
       const instrument = instrumentMap.get(order.instrumentId);

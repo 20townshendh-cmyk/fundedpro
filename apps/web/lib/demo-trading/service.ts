@@ -3,6 +3,7 @@
 import { getDb } from "@fundedpro/db";
 import { ensureDemoTradingWorkspaceForTradingAccount, ensureDemoTradingWorkspaceForUser } from "./bootstrap";
 import { advanceDemoMarket } from "./engine";
+import { demoPositionProtectionColumnsAvailable } from "./protection-columns";
 
 type TerminalSearch = {
   accountId?: string;
@@ -106,6 +107,7 @@ export async function getDemoTradingLiveState(userId: string, search?: Pick<Term
   const db = getDb();
   await ensureDemoTradingWorkspaceForUser(userId);
   await advanceDemoMarket();
+  const hasProtectionColumns = await demoPositionProtectionColumnsAvailable();
 
   const requestedDemoAccountId = await resolveRequestedDemoAccountId(userId, search?.accountId);
   await setActiveDemoAccount(userId, requestedDemoAccountId);
@@ -152,7 +154,8 @@ export async function getDemoTradingLiveState(userId: string, search?: Pick<Term
       }>(
         `
           SELECT i."id" AS "instrumentId", i."symbol", p."side", p."quantity", p."averageEntryPrice"::text, p."lastPrice"::text, p."unrealizedPnl"::text
-          , p."takeProfitPrice"::text, p."stopLossPrice"::text
+          , ${hasProtectionColumns ? 'p."takeProfitPrice"::text' : "NULL::text"} AS "takeProfitPrice"
+          , ${hasProtectionColumns ? 'p."stopLossPrice"::text' : "NULL::text"} AS "stopLossPrice"
           FROM "DemoPosition" p
           JOIN "Instrument" i ON i."id" = p."instrumentId"
           WHERE p."demoAccountId" = $1
@@ -212,6 +215,7 @@ export async function getDemoTradingTerminal(userId: string, search?: TerminalSe
   const db = getDb();
   await ensureDemoTradingWorkspaceForUser(userId);
   await advanceDemoMarket();
+  const hasProtectionColumns = await demoPositionProtectionColumnsAvailable();
 
   const requestedDemoAccountId = await resolveRequestedDemoAccountId(userId, search?.accountId);
   await setActiveDemoAccount(userId, requestedDemoAccountId);
@@ -378,7 +382,9 @@ export async function getDemoTradingTerminal(userId: string, search?: TerminalSe
           stopLossPrice: string | null;
         }>(
           `
-            SELECT i."id" AS "instrumentId", i."symbol", p."side", p."quantity", p."averageEntryPrice"::text, p."lastPrice"::text, p."realizedPnl"::text, p."unrealizedPnl"::text, p."takeProfitPrice"::text, p."stopLossPrice"::text
+            SELECT i."id" AS "instrumentId", i."symbol", p."side", p."quantity", p."averageEntryPrice"::text, p."lastPrice"::text, p."realizedPnl"::text, p."unrealizedPnl"::text,
+              ${hasProtectionColumns ? 'p."takeProfitPrice"::text' : "NULL::text"} AS "takeProfitPrice",
+              ${hasProtectionColumns ? 'p."stopLossPrice"::text' : "NULL::text"} AS "stopLossPrice"
             FROM "DemoPosition" p
             JOIN "Instrument" i ON i."id" = p."instrumentId"
             WHERE p."demoAccountId" = $1

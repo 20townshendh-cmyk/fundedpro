@@ -8,6 +8,7 @@ import { getDb } from "@fundedpro/db";
 import { getSession } from "../auth";
 import { DEMO_TERMINAL_ACCESS_COOKIE, DEMO_TERMINAL_REMEMBER_COOKIE } from "./constants";
 import { placeDemoOrder, recalculateDemoAccountState } from "./engine";
+import { demoPositionProtectionColumnsAvailable } from "./protection-columns";
 import { decryptTradingPassword, encryptTradingPassword } from "../trading-credentials";
 
 const createAccountSchema = z.object({
@@ -422,6 +423,12 @@ export async function cancelDemoOrderAction(formData: FormData) {
 
 export async function updateDemoPositionProtectionAction(formData: FormData) {
   const session = await requireTrader();
+  const hasProtectionColumns = await demoPositionProtectionColumnsAvailable();
+
+  if (!hasProtectionColumns) {
+    return { ok: false as const, error: "protection-unavailable" as const };
+  }
+
   const parsed = protectionSchema.safeParse({
     demoAccountId: formData.get("demoAccountId"),
     instrumentId: formData.get("instrumentId"),
