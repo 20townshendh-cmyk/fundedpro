@@ -1,9 +1,7 @@
-import { cookies } from "next/headers";
 import { randomUUID } from "node:crypto";
-import { createRemoteJWKSet, jwtVerify } from "jose";
+import { createRemoteJWKSet, jwtVerify, SignJWT } from "jose";
 import { getWebEnv } from "./env";
 
-const GOOGLE_STATE_COOKIE = "fundedpro_google_state";
 const GOOGLE_JWKS = createRemoteJWKSet(new URL("https://www.googleapis.com/oauth2/v3/certs"));
 
 type GoogleTokenResponse = {
@@ -22,6 +20,18 @@ function buildGoogleRedirectUri(baseUrl: string) {
   return `${baseUrl.replace(/\/$/, "")}/api/auth/google/callback`;
 }
 
+function getGoogleStateSecret() {
+  return new TextEncoder().encode(getWebEnv().nextAuthSecret);
+}
+
+async function createGoogleStateToken() {
+  return new SignJWT({ nonce: randomUUID(), purpose: "google-auth" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("10m")
+    .sign(getGoogleStateSecret());
+}
+
 export async function beginGoogleAuth(baseUrl?: string) {
   const env = getWebEnv();
 
@@ -29,15 +39,7 @@ export async function beginGoogleAuth(baseUrl?: string) {
     return null;
   }
 
-  const state = randomUUID();
-  const cookieStore = await cookies();
-  cookieStore.set(GOOGLE_STATE_COOKIE, state, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: env.nodeEnv === "production",
-    path: "/",
-    maxAge: 60 * 10
-  });
+  const state = await createGoogleStateToken();
 
   const params = new URLSearchParams({
     client_id: env.googleClientId,
@@ -53,16 +55,24 @@ export async function beginGoogleAuth(baseUrl?: string) {
 
 export async function verifyGoogleCallback(input: { code: string; state: string }, baseUrl?: string) {
   const env = getWebEnv();
-  const cookieStore = await cookies();
-  const expectedState = cookieStore.get(GOOGLE_STATE_COOKIE)?.value;
-  cookieStore.delete(GOOGLE_STATE_COOKIE);
+  let stateValid = false;
 
-  if (!env.googleClientId || !env.googleClientSecret || !expectedState || expectedState !== input.state) {
+  try {
+    const verifiedState = await jwtVerify<{ nonce?: string; purpose?: string }>(
+      input.state,
+      getGoogleStateSecret()
+    );
+    stateValid = verifiedState.payload.purpose === "google-auth" && typeof verifiedState.payload.nonce === "string";
+  } catch (error) {
+    console.error("google-state-token-invalid", error);
+  }
+
+  if (!env.googleClientId || !env.googleClientSecret || !stateValid) {
     console.error("google-callback-invalid-state-or-config", {
       hasClientId: !!env.googleClientId,
       hasClientSecret: !!env.googleClientSecret,
-      hasExpectedState: !!expectedState,
-      stateMatches: expectedState === input.state,
+      hasExpectedState: stateValid,
+      stateMatches: stateValid,
       appUrl: env.appUrl,
       baseUrl
     });
